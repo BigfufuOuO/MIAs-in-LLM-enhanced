@@ -3,11 +3,8 @@ import torch
 import numpy as np
 from heapq import nlargest
 from transformers import AutoModelForCausalLM, AutoTokenizer
-# from pii_leakage.utils.web import is_valid_url, download_and_unzip
 
 from .LLMBase import LLMBase
-
-torch.set_default_device('cuda:2')
 
 
 class SamplingArgs:
@@ -42,7 +39,7 @@ class FinetunedCasualLM(LLMBase):
     Huggingface Casual Language Models.
 
     Args:
-        model_path (str):
+        `model_path (str)`:
             The path/name for the desired langauge model.
 
             Supported models:
@@ -57,7 +54,11 @@ class FinetunedCasualLM(LLMBase):
         None
     """
 
-    def __init__(self, model_path=None, arch=None, max_seq_len=1024):
+    def __init__(self, args=None, 
+                 arch=None, 
+                 model_path='openai-community/gpt2', 
+                 max_seq_len=1024):
+        
         if ':' in model_path:
             model_path, self.model_revision = model_path.split(':')
         else:
@@ -68,6 +69,8 @@ class FinetunedCasualLM(LLMBase):
         else:
             self.arch = arch
 
+        # arguments
+        self.args = args
         # default
         self.tokenizer_use_fast = True
         self.max_seq_len = max_seq_len
@@ -82,55 +85,62 @@ class FinetunedCasualLM(LLMBase):
     def load_local_model(self, model_path=None):
         if model_path is None:
             model_path = self.model_path
-        model_cls, tokenizer = AutoModelForCausalLM, AutoTokenizer
-        self._tokenizer = tokenizer.from_pretrained(self.arch,
-                                                    use_fast=self.tokenizer_use_fast)
+
+        # int8 or half precision
+        int8_kwargs = {}
+        half_kwargs = {}
+        if self.args.int8:
+            int8_kwargs = dict(load_in_8bit=True, torch_dtype=torch.bfloat16)
+        else:
+            half_kwargs = dict(torch_dtype=torch.bfloat16)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
+                                                        use_fast=self.tokenizer_use_fast)
         if self.verbose:
             print(
                 f"> Loading the provided {self.arch} checkpoint from '{model_path}'.")
 
         try:
-            self._lm = AutoModelForCausalLM.from_pretrained(model_path,
+            self.model = AutoModelForCausalLM.from_pretrained(model_path,
                                                             return_dict=True,
                                                             revision=self.model_revision,
-                                                            torch_dtype=torch.bfloat16).eval()
+                                                            **int8_kwargs,
+                                                            **half_kwargs)
+            
         except:
-            self._lm = AutoModelForCausalLM.from_pretrained(model_path, return_dict=True, device_map='cuda:2',
-                                                 revision=self.model_revision, offload_folder='./offload',
-                                                 torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).eval()
+            self.model = AutoModelForCausalLM.from_pretrained(model_path, 
+                                                            return_dict=True, 
+                                                            revision=self.model_revision, 
+                                                            offload_folder='./offload',
+                                                            low_cpu_mem_usage=True,
+                                                            **int8_kwargs,
+                                                            **half_kwargs)
+            
+        self.model.eval()
 
         self._tokenizer.padding_side = "left"
         self._tokenizer.pad_token = self._tokenizer.eos_token
-        self._lm.config.pad_token_id = self._lm.config.eos_token_id
+        self.model.config.pad_token_id = self.model.config.eos_token_id
 
     def query(self, text, new_str_only=False):
         """
         Query an open-source model with a given text prompt.
 
-        Parameters:
-        - text (str): The text prompt to query the model.
+        Args:
+            text (str): The text prompt to query the model.
 
         Returns:
-        - str: The model's output.
+            str: The model's output.
         """
         # TODO pass the args into here. The params should be set according to PII-leakage.
 
         # Encode the text prompt and generate a response
         input_ids = self._tokenizer.encode(text, return_tensors='pt')
-        # output = self.model.generate(input_ids)
 
         # Implement the code to query the open-source model
-        output = self._lm.generate(
-            input_ids=input_ids.to(self._lm.device),
-            # attention_mask=attention_mask.to(self.env_args.device),
+        output = self.model.generate(
+            input_ids=input_ids.to(self.model.device),
             max_new_tokens=self.max_seq_len,
-            # max_length=min(self.n_positions, input_len + sampling_args.seq_len),
-            # do_sample=sampling_args.do_sample,
-            # top_k=sampling_args.top_k,
-            # top_p=sampling_args.top_p,
-            # output_scores=True,
             return_dict_in_generate=True,
-
         )
 
         # Decode the generated text back to a readable string
@@ -144,11 +154,11 @@ class FinetunedCasualLM(LLMBase):
         """
         Evaluate an open-source model with a given text prompt.
 
-        Parameters:
-        - text (str): The text prompt to query the model.
+        Args:
+            text (str): The text prompt to query the model.
 
         Returns:
-        - loss: The model's loss.
+            loss: The model's loss.
         """
         # TODO pass the args into here. The params should be set according to PII-leakage.
         if tokenized:
@@ -156,11 +166,10 @@ class FinetunedCasualLM(LLMBase):
         else:
             # Encode the text prompt and generate a response
             input_ids = self._tokenizer.encode(text, return_tensors='pt', truncation=True, max_length=self.max_seq_len)
-            # output = self.model.generate(input_ids)
 
         # Implement the code to query the open-source model
-        input_ids = input_ids.to(self._lm.device)
-        output = self._lm(
+        input_ids = input_ids.to(self.model.device)
+        output = self.model(
             input_ids=input_ids,
             labels=input_ids.clone(),
         )
@@ -170,11 +179,11 @@ class FinetunedCasualLM(LLMBase):
         """
         Evaluate an open-source model with a given text prompt.
 
-        Parameters:
-        - text (str): The text prompt to query the model.
+        Args:
+            text (str): The text prompt to query the model.
 
         Returns:
-        - PPL: The model's perpelexity.
+            PPL: The model's perpelexity.
         """
         loss = self.evaluate(text, tokenized=tokenized)
         return np.exp(loss)
@@ -185,10 +194,18 @@ class FinetunedCasualLM(LLMBase):
         at each position in the sequence and returning the top N neighboring sequences.
 
         https://aclanthology.org/2023.findings-acl.719.pdf
+        
+        Args:
+            text (str): The input text to generate the neighborhood.
+            p (float): The dropout probability.
+            k (int): The number of top candidates to consider at each position.
+            n (int): The number of neighboring sequences to return.
         """
 
-        tokenized = self._tokenizer(text, return_tensors='pt', truncation=True,
-                                    max_length=self.max_seq_len).input_ids.to(self._lm.device)
+        tokenized = self._tokenizer(text, 
+                                    return_tensors='pt', 
+                                    truncation=True,
+                                    max_length=self.max_seq_len).input_ids.to(self.model.device)
         dropout = torch.nn.Dropout(p)
 
         seq_len = tokenized.shape[1]
@@ -197,12 +214,12 @@ class FinetunedCasualLM(LLMBase):
             target_token = tokenized[0, target_index]
 
             # Embed the sequence
-            if isinstance(self._lm, transformers.LlamaForCausalLM):
-                embedding = self._lm.get_input_embeddings()(tokenized)
-            elif isinstance(self._lm, transformers.GPT2LMHeadModel):
-                embedding = self._lm.transformer.wte.weight[tokenized]
+            if isinstance(self.model, transformers.LlamaForCausalLM):
+                embedding = self.model.get_input_embeddings()(tokenized)
+            elif isinstance(self.model, transformers.GPT2LMHeadModel):
+                embedding = self.model.transformer.wte.weight[tokenized]
             else:
-                raise RuntimeError(f'Unsupported model type for neighborhood generation: {type(self._lm)}')
+                raise RuntimeError(f'Unsupported model type for neighborhood generation: {type(self.model)}')
 
             # Apply dropout only to the target token embedding in the sequence
             embedding = torch.cat([
@@ -212,7 +229,7 @@ class FinetunedCasualLM(LLMBase):
             ], dim=1)
 
             # Get model's predicted posterior distributions over all positions in the sequence
-            probs = torch.softmax(self._lm(inputs_embeds=embedding).logits, dim=2)
+            probs = torch.softmax(self.model(inputs_embeds=embedding).logits, dim=2)
             original_prob = probs[0, target_index, target_token].item()
 
             # Find the K most probable token replacements, not including the target token
@@ -244,15 +261,23 @@ class PeftCasualLM(FinetunedCasualLM):
         from peft.peft_model import PeftModel
         print(f"load peft module from {self.model_path}")
         try:
-            self._lm = PeftModel.from_pretrained(self._lm, self.model_path, device_map='auto')
+            self.model = PeftModel.from_pretrained(self.model, 
+                                                   self.model_path, 
+                                                   device_map='auto')
         except:
-            self._lm = PeftModel.from_pretrained(self._lm, self.model_path, device_map='auto',
-                                                 offload_folder='./offload')
-        # self._lm = self._lm.merge_and_unload()
+            self.model = PeftModel.from_pretrained(self.model, 
+                                                   self.model_path, 
+                                                   device_map='auto',
+                                                   offload_folder='./offload')
 
 
 if __name__ == '__main__':
     # Testing purposes
-    model = FinetunedCasualLM('gpt2')
-    print(model.query(['hello. how are you?', 'what is your name?']))
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--int8', action='store_true')
+    args = parser.parse_args()
+    
+    model = FinetunedCasualLM(args=args, model_path='openai-community/gpt2')
+    print(model.query('Hello, how are you?'))
     print("DONE")
