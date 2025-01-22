@@ -89,9 +89,10 @@ class FinetunedCasualLM(LLMBase):
         # int8 or half precision
         int8_kwargs = {}
         half_kwargs = {}
+        print(f"Loading in int8: {self.args.int8} or half: {self.args.half}")
         if self.args.int8:
             int8_kwargs = dict(load_in_8bit=True, torch_dtype=torch.bfloat16)
-        else:
+        elif self.args.half:
             half_kwargs = dict(torch_dtype=torch.bfloat16)
         self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
                                                         use_fast=self.tokenizer_use_fast)
@@ -134,12 +135,15 @@ class FinetunedCasualLM(LLMBase):
         # TODO pass the args into here. The params should be set according to PII-leakage.
 
         # Encode the text prompt and generate a response
-        input_ids = self._tokenizer.encode(text, return_tensors='pt')
+        input_ids = self._tokenizer(text, return_tensors='pt').input_ids
+        
+        attention_mask = torch.ones_like(input_ids)
 
         # Implement the code to query the open-source model
         output = self.model.generate(
             input_ids=input_ids.to(self.model.device),
             max_new_tokens=self.max_seq_len,
+            do_sample=True,
             return_dict_in_generate=True,
         )
 
@@ -276,6 +280,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--int8', action='store_true')
+    parser.add_argument('--half', action='store_true')
     args = parser.parse_args()
     
     model = FinetunedCasualLM(args=args, model_path='openai-community/gpt2')
