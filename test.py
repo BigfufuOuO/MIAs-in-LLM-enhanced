@@ -1,11 +1,14 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
 
-model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
+model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2").to("cuda")
 tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
+prompt = "JJY是一个"
 
-prompt = "ffghhsadjhji"
+input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("cuda")
 
-input = tokenizer(prompt, return_tensors="pt")
-
-output = model(**input, labels=input.input_ids)
-print(output.loss.item())
+output = model.generate(input_ids, 
+               do_sample=True,
+               temperature=0.9,
+               max_length=100,)
+print(tokenizer.decode(output[0].cpu().tolist(), skip_special_tokens=True))

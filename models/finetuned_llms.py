@@ -89,11 +89,12 @@ class FinetunedCasualLM(LLMBase):
         # int8 or half precision
         int8_kwargs = {}
         half_kwargs = {}
-        print(f"Loading in int8: {self.args.int8} or half: {self.args.half}")
+        print(f"Loading model in int8: {self.args.int8} or half: {self.args.half}")
         if self.args.int8:
             int8_kwargs = dict(load_in_8bit=True, torch_dtype=torch.bfloat16)
         elif self.args.half:
             half_kwargs = dict(torch_dtype=torch.bfloat16)
+            
         self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
                                                         use_fast=self.tokenizer_use_fast)
         if self.verbose:
@@ -103,6 +104,7 @@ class FinetunedCasualLM(LLMBase):
         try:
             self.model = AutoModelForCausalLM.from_pretrained(model_path,
                                                             return_dict=True,
+                                                            device_map='cuda',
                                                             revision=self.model_revision,
                                                             **int8_kwargs,
                                                             **half_kwargs)
@@ -110,6 +112,7 @@ class FinetunedCasualLM(LLMBase):
         except:
             self.model = AutoModelForCausalLM.from_pretrained(model_path, 
                                                             return_dict=True, 
+                                                            device_map='cuda',
                                                             revision=self.model_revision, 
                                                             offload_folder='./offload',
                                                             low_cpu_mem_usage=True,
@@ -267,7 +270,7 @@ class PeftCasualLM(FinetunedCasualLM):
         try:
             self.model = PeftModel.from_pretrained(self.model, 
                                                    self.model_path, 
-                                                   device_map='auto')
+                                                   device_map='cuda')
         except:
             self.model = PeftModel.from_pretrained(self.model, 
                                                    self.model_path, 

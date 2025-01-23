@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from models.finetuned_llms import FinetunedCasualLM
 from .functions import function_map
+import inspect
 
 class MemberInferenceAttack(AttackBase):
     """
@@ -27,11 +28,13 @@ class MemberInferenceAttack(AttackBase):
                  n_neighbor=50):
         # self.extraction_prompt = ["Tell me about..."]  # TODO this is just an example to extract data.
         self.metric = metric
+        if self.metric not in function_map:
+            raise ValueError(f"Metric {self.metric} is not supported. Please check if the function is implemented or if the name is correct.")
         self.ref_model = ref_model
         self.n_neighbor = n_neighbor
     
     @torch.no_grad()
-    def _get_score(self, model: FinetunedCasualLM, text: str):
+    def get_score(self, model: FinetunedCasualLM, text: str):
         """
         Return score. Smaller value means membership.
         Function maps the method to the corresponding evaluation function.
@@ -40,19 +43,35 @@ class MemberInferenceAttack(AttackBase):
             model: The model to evaluate.
         
         """
-        score = function_map[self.metric](model, text)
+        target = model
+        text = text
+        reference = self.ref_model
+        n_neighbor = self.n_neighbor
+        k = 0.1
+        
+        # get locals
+        locals_ = locals()
+        # access the function from the function map, according to the metric.
+        sig = inspect.signature(function_map[self.metric])
+        required_args = sig.parameters
+        extracted_args = {
+            name: locals_[name] 
+            for name in required_args if name in locals_
+        }
+        
+        score = function_map[self.metric](**extracted_args)
         return score
     
-    def execute(self, model, train_set, test_set, cache_file=None, resume=False):
-        """Compute scores for texts.
-
-        Parameters:
-        - memberships: A list of 0,1. 0 means non-member and 1 means member.
-
-        Returns:
-        - scores: the scores of membership.
+    def execute(self, 
+                target: FinetunedCasualLM, 
+                train_set, 
+                test_set, 
+                cache_file=None, 
+                resume=False):
         """
-        model._lm.eval()
+        Excute the attack.
+        """
+        target.model.eval()
         if resume:
             if os.path.exists(cache_file):
                 print(f"resume from {cache_file}")
@@ -65,6 +84,7 @@ class MemberInferenceAttack(AttackBase):
                 results = defaultdict(list)
         else:
             results = defaultdict(list)
+            
         if resume:
             if loaded['member'] != 1:
                 print(f"Train set has been evaluated.")
@@ -74,44 +94,51 @@ class MemberInferenceAttack(AttackBase):
                 print(f"Resume from {resume_i+1}/{len(test_set)}")
         else:
             resume_i = -1
-        member = 1
+            
+        # train set
         for i, sample in enumerate(tqdm(train_set, desc="Train set")):
             if i <= resume_i:
                 continue
-            score = self._get_score(model, sample['text'])
+            score = self.get_score(target, sample['text'])
             results['score'].append(score)
-            results['membership'].append(member)
-            if (i+1) % 100 == 0:
-                torch.save({'results': results, 'i': i, 'member': member}, cache_file)
+            results['membership'].append(1)
+            # if cache_file exists
+            if cache_file and (i+1) % 100 == 0:
+                torch.save({'results': results, 'i': i, 'member': 1}, cache_file)
         print(f"Train avg score: {np.mean(np.array(results['score']))}")
         
         test_scores = []
-        member = 0
-        
+             
         if resume and loaded['member'] == 0:
             resume_i = loaded['i']
             print(f"Resume from {resume_i+1}/{len(test_set)}")
         else:
             resume_i = -1
+        
+        # test set
         for i, sample in enumerate(tqdm(test_set)):
             if i <= resume_i:
                 continue
-            score = self._get_score(model, sample['text'])
+            score = self.get_score(target, sample['text'])
             results['score'].append(score)
             test_scores.append(score)
             results['membership'].append(0)
-            if (i+1) % 30 == 0:
-                torch.save({'results': results, 'i': i, 'member': member}, cache_file)
+            if cache_file and (i+1) % 30 == 0:
+                torch.save({'results': results, 'i': i, 'member': 0}, cache_file)
         print(f"Test avg score: {np.mean(np.array(test_scores))}")
-        torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
+        # save the results
+        if cache_file:
+            torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
         return results
 
     def evaluate(self, results):
-        # results['score']
+        """
+        Evaluate the results.
+        """
         score_dict = {}
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
-        # # follow https://arxiv.org/pdf/2203.03929.pdf
+        # follow https://arxiv.org/pdf/2203.03929.pdf
         # threshold = np.quantile(results['score'][results['membership']==0], 0.9)
         threshold = np.mean(results['score'][results['membership']==0])
         score_dict['nonmember_score'] = np.mean(results['score'][results['membership']==0])
