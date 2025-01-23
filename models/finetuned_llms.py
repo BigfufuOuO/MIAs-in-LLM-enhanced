@@ -104,7 +104,7 @@ class FinetunedCasualLM(LLMBase):
         try:
             self.model = AutoModelForCausalLM.from_pretrained(model_path,
                                                             return_dict=True,
-                                                            device_map='cuda',
+                                                            device_map='auto',
                                                             revision=self.model_revision,
                                                             **int8_kwargs,
                                                             **half_kwargs)
@@ -112,7 +112,7 @@ class FinetunedCasualLM(LLMBase):
         except:
             self.model = AutoModelForCausalLM.from_pretrained(model_path, 
                                                             return_dict=True, 
-                                                            device_map='cuda',
+                                                            device_map='auto',
                                                             revision=self.model_revision, 
                                                             offload_folder='./offload',
                                                             low_cpu_mem_usage=True,

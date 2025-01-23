@@ -3,3 +3,7 @@
 
 # python cache
 __pycache__/
+
+# finetuned llms model file
+ft_llms/
+cache/
