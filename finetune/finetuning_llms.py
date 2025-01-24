@@ -27,7 +27,8 @@ parser.add_argument("--model_path", type=str, default="openai-community/gpt2", h
 parser.add_argument("--dataset_name", type=str, default="wikitext", help="The dataset name.")
 parser.add_argument("--dataset_config_name", type=str, default=None, help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--use_cache", action="store_true", default=False, help="Whether to use cache.")
-parser.add_argument("--cache_path", type=str, default="./cache", help="The cache path.")
+parser.add_argument("--model_cache_path", type=str, default="./cache/models", help="The cache path.")
+parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets", help="The dataset cache path.")
 parser.add_argument("--trust_remote_code", action="store_true", default=False)
 
 parser.add_argument("--output_dir", type=str, default="./output", required=True, help="The output directory.")
@@ -83,7 +84,7 @@ if args.token is None:
 else:
     access_token = args.token
     
-config = AutoConfig.from_pretrained(args.model_path, cache_dir=args.cache_path)
+config = AutoConfig.from_pretrained(args.model_path, cache_dir=args.model_cache_path)
 
 config.use_cache = False
 config_dict = config.to_dict()
@@ -117,7 +118,7 @@ if model_type == "llama":
     tokenizer = LlamaTokenizer.from_pretrained(args.model_path, 
                                                 token=access_token,
                                                 trust_remote_code=args.trust_remote_code, 
-                                                cache_dir=args.cache_path,
+                                                cache_dir=args.model_cache_path,
                                                 add_eos_token=args.add_eos_token, 
                                                 add_bos_token=args.add_bos_token,
                                                 use_fast=True)
@@ -125,7 +126,7 @@ else:
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, 
                                                 token=access_token,
                                                 trust_remote_code=args.trust_remote_code, 
-                                                cache_dir=args.cache_path,
+                                                cache_dir=args.model_cache_path,
                                                 add_eos_token=args.add_eos_token, 
                                                 add_bos_token=args.add_bos_token,
                                                 use_fast=True)
@@ -195,7 +196,7 @@ model = AutoModelForCausalLM.from_pretrained(args.model_path,
                                              token=access_token, 
                                              quantization_config=bnb_config,
                                              trust_remote_code=args.trust_remote_code, 
-                                             cache_dir=args.cache_path,
+                                             cache_dir=args.model_cache_path,
                                              torch_dtype=torch_dtype, 
                                              config=config, 
                                              **kwargs)

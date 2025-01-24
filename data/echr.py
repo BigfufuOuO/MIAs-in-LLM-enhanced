@@ -31,7 +31,26 @@ class EchrDataset:
             trust_remote_code=True)
     
     def train_set(self):
+        """
+        Return the training set.
+        It looks like this:
+        ```
+        Dataset({
+            features: ['text'],
+            num_rows: 1000
+        })
+        ```
+        """
         return self.raw_datasets['train']
     
     def test_set(self):
+        """
+        Return the test set.
+        It looks like this:
+        ```
+        Dataset({
+            features: ['text'],
+            num_rows: 1000
+        })
+        """
         return self.raw_datasets['test']

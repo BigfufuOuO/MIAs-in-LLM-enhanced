@@ -1,5 +1,5 @@
 # set available GPUs
-export CUDA_VISIBLE_DEVICES=1,2
+export CUDA_VISIBLE_DEVICES=3,4
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 

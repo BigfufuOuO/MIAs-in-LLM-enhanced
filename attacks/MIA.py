@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from models.finetuned_llms import FinetunedCasualLM
 from .functions import function_map
+from .utils import draw_auc_curve
 import inspect
 
 class MemberInferenceAttack(AttackBase):
@@ -116,7 +117,7 @@ class MemberInferenceAttack(AttackBase):
             resume_i = -1
         
         # test set
-        for i, sample in enumerate(tqdm(test_set)):
+        for i, sample in enumerate(tqdm(test_set, desc="Test set")):
             if i <= resume_i:
                 continue
             score = self.get_score(target, sample['text'])
@@ -138,20 +139,23 @@ class MemberInferenceAttack(AttackBase):
         score_dict = {}
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
-        # follow https://arxiv.org/pdf/2203.03929.pdf
-        # threshold = np.quantile(results['score'][results['membership']==0], 0.9)
-        threshold = np.mean(results['score'][results['membership']==0])
         score_dict['nonmember_score'] = np.mean(results['score'][results['membership']==0])
         score_dict['member_score'] = np.mean(results['score'][results['membership']==1])
+        
+        # follow https://arxiv.org/pdf/2203.03929.pdf
+        # threshold = np.quantile(results['score'][results['membership']==0], 0.9)
         # for computing AUC, you can use any threshold.
         # threshold = np.quantile(results['score'], 0.5)
+        threshold = np.mean(results['score'][results['membership']==0])
         results['score'] -= threshold
+        
         # this is for the ease of using roc_auc_score, which is equivalent to varying threshold.
         # results['score'] = 1. - 1 / (1 + np.exp(- results['score']))
-        # NOTE score has to be reversed such that lower score implies membership.
+        # NOTE: score has to be reversed such that lower score implies membership.
         score_dict['acc'] = accuracy_score(results['membership'], results['score'] < 0)
         score_dict['auc'] = roc_auc_score(results['membership'], - results['score'])
         fpr, tpr, thresholds = roc_curve(results['membership'], - results['score'])
+        draw_auc_curve(fpr, tpr)
         score_dict[r'TPR@0.1%FPR'] = None
         for fpr_, tpr_, thr_ in zip(fpr, tpr, thresholds):
             if fpr_ > 0.001:

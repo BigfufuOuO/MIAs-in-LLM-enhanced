@@ -3,6 +3,27 @@ import os
 
 
 def packing_texts(examples,):
+    """
+    This function is used to pack the texts into chunks of `block_size` tokens.
+    For example, before packing, the train_dataset and text column looks like:
+    ```
+    train_dataset = Dataset({
+        features: ['text', 'label'],
+        num_rows: 96000
+    })
+    train_dataset[0] == {'text': 'This is the first text.'}
+    ```
+    After packing, the train_dataset and text column looks like:
+    ```
+    train_dataset = Dataset({
+        features: ['text'],
+        num_rows: 10000
+    })
+    train_dataset[0] == {'text': 'This is the first text.'}
+    ```
+    Where the text is packed into chunks of `block_size` tokens, the length of the text is equal to `block_size`,
+    the length of dataset is reduced.
+    """
     more_examples = True
     packed_texts = []
     packed_ids = []
@@ -47,9 +68,30 @@ def dataset_prepare(args,
                     chars_per_token=3.6):
     """
     Provide dataset for training or evaluation.
+    It also drops the columns that are not needed, for example, the `label` column.
+    ```
+    train_dataset[0] = {'text': 'This is the first text.', 'label': 0}
+    ```
+    Affter dropping the `label` column, the dataset looks like:
+    ```
+    train_dataset[0] = {'text': 'This is the first text.'}
+    ```
     
     Args:
         args: The arguments.
+        
+    Returns:
+        train_dataset: The training dataset.
+                    Format:
+                        ```
+                        Dataset({
+                            features: ['text'],
+                            num_rows: 1000
+                        })
+                        ```
+                    Example:
+                        `train_dataset[0] == {'text': 'This is the first text.'}`
+        valid_dataset: The validation dataset.
     """
     train_dataset = datasets.load_dataset(
         args.dataset_name,
@@ -80,7 +122,7 @@ def dataset_prepare(args,
         max_buff_size = block_size * chars_per_token * num_of_sequences
         tokenizer_ = tokenizer
         # if dir not exists, create it
-        save_path = f"{args.cache_path}/{args.dataset_name}/{args.dataset_config_name}"
+        save_path = f"{args.dataset_cache_path}/{args.dataset_name}/{args.dataset_config_name}"
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         
@@ -103,4 +145,4 @@ def dataset_prepare(args,
             desc=f"Packing texts in chunks of {block_size} tokens"
         )
         
-        return train_dataset, valid_dataset
+    return train_dataset, valid_dataset

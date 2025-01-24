@@ -1,10 +1,11 @@
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=1,2
+export CUDA_VISIBLE_DEVICES=3
 
 echo "Start running the experiment."
-echo "Cuda visible devices: $CUDA_VISIBLE_DEVICES"
+echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 python run.py \
     --target_model openai-community/gpt2 \
+    --dataset_name ag_news \
     --metric ppl \
-    --half
+    --half --packing --use_dataset_cache
