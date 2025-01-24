@@ -32,6 +32,9 @@ parser.add_argument("--packing", action="store_true")
 parser.add_argument("--preprocessing_num_workers", type=int, default=1, help="The number of workers to use for the preprocessing.")
 parser.add_argument("--use_dataset_cache", action="store_true", default=False, help="Whether to use dataset cache.")
 
+# debug
+parser.add_argument("--debug", action="store_true", help="Debug mode.")
+
 args = parser.parse_args()
 
 
@@ -46,4 +49,4 @@ results = attack.execute(target_llm,
                          data.test_dataset,)
 results = attack.evaluate(results)
 print('RESULT:\n', results)
-print('Average Length of the words in train dataset:', data.get_string_length())
+print('Average Length of the words in dataset:', data.get_string_length())

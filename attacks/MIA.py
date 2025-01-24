@@ -147,6 +147,7 @@ class MemberInferenceAttack(AttackBase):
         # for computing AUC, you can use any threshold.
         # threshold = np.quantile(results['score'], 0.5)
         threshold = np.mean(results['score'][results['membership']==0])
+        score_dict['threshold'] = threshold
         results['score'] -= threshold
         
         # this is for the ease of using roc_auc_score, which is equivalent to varying threshold.

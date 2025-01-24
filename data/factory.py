@@ -2,11 +2,16 @@ from .echr import EchrDataset
 from .enron import EnronDataset
 from .provider import dataset_prepare
 import datasets
+import numpy as np
 
 class DataFactory:
     def __init__(self, data_path, args, tokenizer):
         self.data_path = data_path
         self.train_dataset, self.test_dataset = self.get_dataset(args, tokenizer)
+        if args.debug:
+            # for debugging
+            self.train_dataset = self.train_dataset.select(list(range(len(self.train_dataset) // 10)))
+            self.test_dataset = self.test_dataset.select(list(range(len(self.test_dataset) // 10)))
 
     def get_dataset(self, args, tokenizer):
         if args.dataset_name == "data/echr":
@@ -30,7 +35,7 @@ class DataFactory:
         train_text_length = self.train_dataset.map(compute_length)
         test_text_length = self.test_dataset.map(compute_length)
         
-        train_avg_length = train_text_length.map(lambda x: x['text_length']).mean().item()
-        test_avg_length = test_text_length.map(lambda x: x['text_length']).mean().item()
+        train_avg_length = np.mean(train_text_length['text_length'])
+        test_avg_length = np.mean(test_text_length['text_length'])
         
         return train_avg_length, test_avg_length
