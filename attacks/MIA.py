@@ -132,7 +132,7 @@ class MemberInferenceAttack(AttackBase):
             torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
         return results
 
-    def evaluate(self, results):
+    def evaluate(self, args, results):
         """
         Evaluate the results.
         """
@@ -156,7 +156,15 @@ class MemberInferenceAttack(AttackBase):
         score_dict['acc'] = accuracy_score(results['membership'], results['score'] < 0)
         score_dict['auc'] = roc_auc_score(results['membership'], - results['score'])
         fpr, tpr, thresholds = roc_curve(results['membership'], - results['score'])
-        draw_auc_curve(fpr, tpr)
+        
+        # draw the ROC curve
+        save_path = os.path.join(args.result_dir, args.model_name, args.dataset_name,
+                                 args.metric)
+        draw_auc_curve(fpr, tpr, 
+                       title=str(save_path),
+                       save_path=save_path)
+        
+        # Get TPR@x%FPR
         score_dict[r'TPR@0.1%FPR'] = None
         for fpr_, tpr_, thr_ in zip(fpr, tpr, thresholds):
             if fpr_ > 0.001:

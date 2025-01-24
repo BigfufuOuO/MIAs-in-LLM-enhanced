@@ -11,7 +11,7 @@ from datasets import Dataset, load_from_disk
 
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from data.provider import dataset_prepare
+from data.factory import DataFactory
 import torch
 
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PrefixTuningConfig, PromptEncoderConfig, IA3Config
@@ -71,6 +71,8 @@ parser.add_argument("--add_eos_token", action="store_true", help="Add EOS token 
 parser.add_argument("--add_bos_token", action="store_true", help="Add BOS token to tokenizer", default=False)
 parser.add_argument("--validation_split_percentage", default=0.2, help="The percentage of the train set used as validation set in case there's no validation split")
 
+# debug
+parser.add_argument("--debug", action="store_true", help="Debug mode.")
 
 args = parser.parse_args()
 
@@ -224,7 +226,10 @@ else:
 print_trainable_parameters(model)
 
 with accelerator.main_process_first():
-    train_dataset, valid_dataset = dataset_prepare(args, tokenizer=tokenizer)
+    # train_dataset, valid_dataset = dataset_prepare(args, tokenizer=tokenizer)
+    data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=tokenizer)
+    train_dataset, valid_dataset = data.train_dataset, data.test_dataset
+    print(">>> Avg length of the words in dataset: ", data.get_string_length())
 
 logger.info(f"Length of Train dataset: {len(train_dataset)}, Valid dataset: {len(valid_dataset)}")
     
@@ -234,7 +239,7 @@ training_args = TrainingArguments(
     do_eval=True,
     output_dir=args.output_dir,
     dataloader_drop_last=True,
-    evaluation_strategy="steps",
+    eval_strategy="steps",
     save_strategy="steps",
     logging_strategy="steps",
     num_train_epochs=args.epochs,

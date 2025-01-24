@@ -15,6 +15,7 @@ parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets"
 
 # model definition
 parser.add_argument('--target_model', type=str, default="openai-community/gpt2", required=True, help="The target model to attack.")
+parser.add_argument('--model_name', type=str, default=None, help="The NAME to the original target model.")
 parser.add_argument('--data_path', type=str, default="data/echr", help="The path to the data.")
 
 # attack parameter
@@ -35,18 +36,21 @@ parser.add_argument("--use_dataset_cache", action="store_true", default=False, h
 # debug
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
 
+# result
+parser.add_argument("--result_dir", type=str, default="./results", help="The output directory to save the results.")
+
 args = parser.parse_args()
 
 
 
 # main entry
 target_llm = FinetunedCasualLM(args=args,
-                               model_path="openai-community/gpt2")
+                               model_path=args.target_model,)
 data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
 attack = MemberInferenceAttack(metric=args.metric,)
 results = attack.execute(target_llm, 
                          data.train_dataset,
                          data.test_dataset,)
-results = attack.evaluate(results)
+results = attack.evaluate(args, results)
 print('RESULT:\n', results)
 print('Average Length of the words in dataset:', data.get_string_length())

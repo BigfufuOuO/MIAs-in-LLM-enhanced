@@ -13,6 +13,7 @@ class DataFactory:
             self.train_dataset = self.train_dataset.select(list(range(len(self.train_dataset) // 10)))
             self.test_dataset = self.test_dataset.select(list(range(len(self.test_dataset) // 10)))
 
+
     def get_dataset(self, args, tokenizer):
         if args.dataset_name == "data/echr":
             data = EchrDataset(data_path=self.data_path)
@@ -32,8 +33,12 @@ class DataFactory:
             example['text_length'] = len(example['text'])
             return example
 
-        train_text_length = self.train_dataset.map(compute_length)
-        test_text_length = self.test_dataset.map(compute_length)
+        train_text_length = self.train_dataset.map(compute_length,
+                                                   load_from_cache_file=False,
+                                                   desc="Computing length of the text(train)")
+        test_text_length = self.test_dataset.map(compute_length,
+                                                 load_from_cache_file=False,
+                                                 desc="Computing length of the text(test)")
         
         train_avg_length = np.mean(train_text_length['text_length'])
         test_avg_length = np.mean(test_text_length['text_length'])

@@ -1,5 +1,6 @@
 import datasets
 import os
+import numpy as np
 
 
 def packing_texts(examples,):
@@ -23,14 +24,17 @@ def packing_texts(examples,):
     ```
     Where the text is packed into chunks of `block_size` tokens, the length of the text is equal to `block_size`,
     the length of dataset is reduced.
+    
+    Args:
+        examples: The examples.
+        max_buff_size: The maximum buffer size, which limits the number of characters handled at once.
+        block_size: The block size, tokens per chunk.
     """
     more_examples = True
     packed_texts = []
     packed_ids = []
     assert list(examples.keys()) == ["text"], "Only text column is supported for packing."
     iterator = iter(examples["text"])
-    total_num = 0
-    drop_num = 0
     while more_examples:
         buffer, buffer_len = [], 0
         while True:
@@ -42,22 +46,24 @@ def packing_texts(examples,):
             except StopIteration:
                 more_examples = False
                 break
-        tokenized_inputs = tokenizer_(buffer, truncation=False)["input_ids"]
-        inputs = tokenizer_.batch_decode(tokenized_inputs)
-        tokenized_inputs = tokenizer_(inputs, truncation=False)["input_ids"]
-        all_token_ids = []
-        for tokenized_input in tokenized_inputs:
-            all_token_ids.extend(tokenized_input)
+        
+        if not buffer:
+            # if buffer is empty, break
+            break
+            
+        tokenized_inputs = tokenizer_(buffer, truncation=False)["input_ids"] # shape: (num_examples, num_tokens)
+        
+        # concatenate all the tokenized inputs
+        all_token_ids = np.concatenate(tokenized_inputs)
+        
         for i in range(0, len(all_token_ids), block_size):
             input_ids = all_token_ids[i: i + block_size]
             if len(input_ids) == block_size:
                 packed_ids.append(input_ids)
                 input_text = tokenizer_.decode(input_ids)
-                total_num += 1
                 if len(tokenizer_.encode(input_text)) == block_size:
                     packed_texts.append(input_text)
-                    drop_num += 1
-    # print(f"Total examples: {total_num}, dropped num: {drop_num}, dropped rate: {1 - drop_num/total_num}")
+    
     return {
         "text": packed_texts
     }
@@ -121,6 +127,7 @@ def dataset_prepare(args,
         block_size = args.block_size
         max_buff_size = block_size * chars_per_token * num_of_sequences
         tokenizer_ = tokenizer
+        print(f"Block size: {block_size}, max buffer size: {max_buff_size}")
         # if dir not exists, create it
         save_path = f"{args.dataset_cache_path}/{args.dataset_name}/{args.dataset_config_name}"
         if not os.path.exists(save_path):
