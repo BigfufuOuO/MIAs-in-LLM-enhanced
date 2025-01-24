@@ -36,7 +36,7 @@ def packing_texts(examples,):
                 if len(tokenizer_.encode(input_text)) == block_size:
                     packed_texts.append(input_text)
                     drop_num += 1
-    print(f"Total examples: {total_num}, dropped num: {drop_num}, dropped rate: {1 - drop_num/total_num}")
+    # print(f"Total examples: {total_num}, dropped num: {drop_num}, dropped rate: {1 - drop_num/total_num}")
     return {
         "text": packed_texts
     }
@@ -68,8 +68,8 @@ def dataset_prepare(args,
     text_column = next((col for col in possible_text_columns if col in column), None)
     print(f"Train dataset columns: {column}, select text column: {text_column}")
     
-    train_dataset = train_dataset.select(text_column)
-    valid_dataset = valid_dataset.select(text_column)
+    train_dataset = train_dataset.select_columns(text_column)
+    valid_dataset = valid_dataset.select_columns(text_column)
     if text_column != "text":
         train_dataset = train_dataset.rename_column(text_column, "text")
         valid_dataset = valid_dataset.rename_column(text_column, "text")

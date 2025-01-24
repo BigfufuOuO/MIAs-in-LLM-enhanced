@@ -7,3 +7,6 @@ __pycache__/
 # finetuned llms model file
 ft_llms/
 cache/
+
+# wandb files
+wandb/

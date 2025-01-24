@@ -63,6 +63,8 @@ parser.add_argument("--use_int8", action="store_true", default=False)
 parser.add_argument("--disable_peft", action="store_true", default=False)
 parser.add_argument("--disable_flash_attention", action="store_true", default=False, help="Whether to disable flash attention.")
 
+parser.add_argument("--save_limit", type=int, default=None)
+
 parser.add_argument("--pad_token_id", default=None, type=int, help="The end of sequence token.")
 parser.add_argument("--add_eos_token", action="store_true", help="Add EOS token to tokenizer", default=False)
 parser.add_argument("--add_bos_token", action="store_true", help="Add BOS token to tokenizer", default=False)
@@ -222,6 +224,8 @@ print_trainable_parameters(model)
 
 with accelerator.main_process_first():
     train_dataset, valid_dataset = dataset_prepare(args, tokenizer=tokenizer)
+
+logger.info(f"Length of Train dataset: {len(train_dataset)}, Valid dataset: {len(valid_dataset)}")
     
 logger.info(f"Training with {Accelerator().num_processes} GPUs")
 training_args = TrainingArguments(
@@ -247,7 +251,8 @@ training_args = TrainingArguments(
     weight_decay=args.weight_decay,
     adam_epsilon=1e-6,
     report_to="wandb",
-    load_best_model_at_end=False,
+    load_best_model_at_end=True,
+    metric_for_best_model="eval_loss",
     save_total_limit=args.save_limit,
     bf16=True if torch.cuda.is_bf16_supported() else False,
     fp16=False if torch.cuda.is_bf16_supported() else True,
