@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 from tqdm import tqdm
 
-from sklearn.metrics import roc_auc_score, accuracy_score, roc_curve
+from sklearn.metrics import accuracy_score, roc_curve, auc
 from collections import defaultdict
 
 from models.finetuned_llms import FinetunedCasualLM
@@ -139,8 +139,8 @@ class MemberInferenceAttack(AttackBase):
         score_dict = {}
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
-        score_dict['nonmember_score'] = np.mean(results['score'][results['membership']==0])
-        score_dict['member_score'] = np.mean(results['score'][results['membership']==1])
+        score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
+        score_dict['test(nonmember)_score'] = np.mean(results['score'][results['membership']==0])
         
         # follow https://arxiv.org/pdf/2203.03929.pdf
         # threshold = np.quantile(results['score'][results['membership']==0], 0.9)
@@ -154,8 +154,9 @@ class MemberInferenceAttack(AttackBase):
         # results['score'] = 1. - 1 / (1 + np.exp(- results['score']))
         # NOTE: score has to be reversed such that lower score implies membership.
         score_dict['acc'] = accuracy_score(results['membership'], results['score'] < 0)
-        score_dict['auc'] = roc_auc_score(results['membership'], - results['score'])
+        # score_dict['auc'] = roc_auc_score(results['membership'], - results['score'])
         fpr, tpr, thresholds = roc_curve(results['membership'], - results['score'])
+        score_dict['auc'] = auc(fpr, tpr)
         
         # draw the ROC curve
         save_path = os.path.join(args.result_dir, args.model_name, args.dataset_name,
@@ -165,9 +166,14 @@ class MemberInferenceAttack(AttackBase):
                        save_path=save_path)
         
         # Get TPR@x%FPR
-        score_dict[r'TPR@0.1%FPR'] = None
-        for fpr_, tpr_, thr_ in zip(fpr, tpr, thresholds):
-            if fpr_ > 0.001:
-                score_dict[r'TPR@0.1%FPR'] = tpr_
-                break
+        for rate in [0.001, 0.005, 0.01, 0.05]:
+            tpr_rate = tpr[np.where(fpr>=rate)[0][0]]
+            actual_rate = fpr[np.where(fpr>=rate)[0][0]]
+            score_dict[f'TPR@{rate*100}%FPR({actual_rate:.5f})'] = tpr_rate
+            
+        for rate in [0.99, 0.95]:
+            fpr_rate = fpr[np.where(tpr<=rate)[0][-1]]
+            actual_rate = tpr[np.where(tpr<=rate)[0][-1]]
+            score_dict[f'FPR@{rate*100}%TPR({actual_rate:.5f})'] = fpr_rate
+        # score_dict[r'TPR@0.1%FPR'] = tpr[np.where(fpr>=0.001)[0][0]]
         return score_dict

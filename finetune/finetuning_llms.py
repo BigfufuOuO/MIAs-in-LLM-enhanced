@@ -73,6 +73,7 @@ parser.add_argument("--validation_split_percentage", default=0.2, help="The perc
 
 # debug
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
+parser.add_argument("--small_dataset", action="store_true", help="Use small dataset.")
 
 args = parser.parse_args()
 

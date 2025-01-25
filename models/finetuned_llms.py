@@ -176,10 +176,11 @@ class FinetunedCasualLM(LLMBase):
 
         # Implement the code to query the open-source model
         input_ids = input_ids.to(self.model.device)
-        output = self.model(
-            input_ids=input_ids,
-            labels=input_ids.clone(),
-        )
+        with torch.no_grad():
+            output = self.model(
+                input_ids=input_ids,
+                labels=input_ids.clone(),
+            )
         return output.loss.item()
 
     def evaluate_ppl(self, text, tokenized=False):

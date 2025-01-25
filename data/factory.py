@@ -12,6 +12,15 @@ class DataFactory:
             # for debugging
             self.train_dataset = self.train_dataset.select(list(range(len(self.train_dataset) // 10)))
             self.test_dataset = self.test_dataset.select(list(range(len(self.test_dataset) // 10)))
+            
+        if args.small_dataset:
+            print("Using small dataset.")
+            np.random.seed(42)
+            # select 1/5 of the dataset
+            selected_indices = np.random.choice(len(self.train_dataset), len(self.train_dataset) // 5, replace=False)
+            self.train_dataset = self.train_dataset.select(selected_indices)
+            selected_indices = np.random.choice(len(self.test_dataset), len(self.test_dataset) // 5, replace=False)
+            self.test_dataset = self.test_dataset.select(selected_indices)
 
 
     def get_dataset(self, args, tokenizer):
@@ -44,3 +53,9 @@ class DataFactory:
         test_avg_length = np.mean(test_text_length['text_length'])
         
         return train_avg_length, test_avg_length
+    
+    def get_preview(self):
+        """
+        Get the preview of the dataset.
+        """
+        return self.train_dataset[0], self.test_dataset[0]

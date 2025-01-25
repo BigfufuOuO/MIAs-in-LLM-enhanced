@@ -1,6 +1,7 @@
 from data.factory import DataFactory
 from models.finetuned_llms import FinetunedCasualLM
 from attacks.MIA import MemberInferenceAttack
+import pandas as pd
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -35,6 +36,7 @@ parser.add_argument("--use_dataset_cache", action="store_true", default=False, h
 
 # debug
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
+parser.add_argument("--small_dataset", action="store_true", help="Use small dataset.")
 
 # result
 parser.add_argument("--result_dir", type=str, default="./results", help="The output directory to save the results.")
@@ -43,16 +45,20 @@ args = parser.parse_args()
 
 
 
-# main entry
+# ======================== MAIN ========================
 target_llm = FinetunedCasualLM(args=args,
                                model_path=args.target_model,)
 
+# data
 data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
-print('Average Length of the words in dataset:', data.get_string_length())
+print('Average Length of the string in dataset:', data.get_string_length())
+print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
+# excute attack
 attack = MemberInferenceAttack(metric=args.metric,)
 results = attack.execute(target_llm, 
                          data.train_dataset,
                          data.test_dataset,)
 results = attack.evaluate(args, results)
-print('RESULT:\n', results)
+result_df = pd.DataFrame.from_dict(results, orient='index').T
+print(result_df)

@@ -6,8 +6,8 @@ export HF_ENDPOINT="http://hf-mirror.com"
 model_name="openai-community/gpt2"
 dataset="ag_news"
 model_type="target"
-output_dir="./ft_llms/"$model_name"/"$dataset"/"$block_size"/"$model_type"/"
-block_size=128
+output_dir="./ft_llms/"$model_name"/"$dataset"/"bs$block_size"/"$model_type"/"
+block_size=32
 
 accelerate launch ./finetune/finetuning_llms.py \
     --output_dir $output_dir \
@@ -18,4 +18,5 @@ accelerate launch ./finetune/finetuning_llms.py \
     --save_epochs 1000 \
     --log_steps 500 \
     --packing \
-    -e 10 -bs 16 -lr 1e-4 --gradient_accumulation_steps 1
+    --small_dataset \
+    -e 10 -bs 32 -lr 5e-3 --gradient_accumulation_steps 1
