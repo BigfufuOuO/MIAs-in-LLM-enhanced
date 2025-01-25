@@ -270,8 +270,9 @@ trainer = SFTTrainer(
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=valid_dataset,
-    dataset_text_field="text",
+    # dataset_text_field="text",
     tokenizer=tokenizer,
+    max_seq_length=1024
 )
 
 # train
