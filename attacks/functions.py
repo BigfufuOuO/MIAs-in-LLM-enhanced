@@ -122,13 +122,13 @@ def Min_k(target: FinetunedCasualLM,
     input_ids = target.tokenizer(text, return_tensors='pt', 
                                 truncation=True, 
                                 max_length=target.max_seq_len).input_ids
-    input_ids.to(target.device)
+    input_ids = input_ids.to(target.model.device)
     with torch.no_grad():
         outputs = target.model(input_ids, labels=input_ids)
-        loss, logits = outputs[:2]
+    loss, logits = outputs[:2]
     
-    probs = F.softmax(logits, dim=-1)
-    log_probs = F.log_softmax(logits, dim=-1)
+    input_ids = input_ids[0][1:].unsqueeze(-1)
+    log_probs = F.log_softmax(logits[0, :-1], dim=-1)
     token_log_probs = log_probs.gather(dim=-1, index=input_ids).squeeze(-1)
     
     k_length = int(len(token_log_probs) * k)
@@ -152,19 +152,21 @@ def Min_k_plus(target: FinetunedCasualLM,
     input_ids = target.tokenizer(text, return_tensors='pt', 
                                 truncation=True, 
                                 max_length=target.max_seq_len).input_ids
-    input_ids.to(target.device)
+    input_ids = input_ids.to(target.model.device)
     with torch.no_grad():
         outputs = target.model(input_ids, labels=input_ids)
-        loss, logits = outputs[:2]
+    loss, logits = outputs[:2]
     
-    probs = F.softmax(logits, dim=-1)
-    log_probs = F.log_softmax(logits, dim=-1)
+    input_ids = input_ids[0][1:].unsqueeze(-1)
+    probs = F.softmax(logits[0,:-1], dim=-1)
+    log_probs = F.log_softmax(logits[0,:-1], dim=-1)
     token_log_probs = log_probs.gather(dim=-1, index=input_ids).squeeze(-1)
     # min-k ++
     mu = (probs * log_probs).sum(-1)
     sigma = (probs * torch.square(log_probs)).sum(-1) - torch.square(mu)
     
     mink_plus = (token_log_probs - mu) / (sigma.sqrt() + 1e-8)
+    mink_plus = mink_plus.to(torch.float32)
     k_length = int(len(token_log_probs) * k)
     topk = np.sort(mink_plus.cpu())[:k_length]
     # TODO: Check if this is correct
@@ -195,6 +197,6 @@ function_map = {
     "lira": LiRASimple,
     "neighbor": Neighbour,
     "min_k": Min_k,
-    "min_k_plus": Min_k_plus,
+    "min_k++": Min_k_plus,
     "sva_mia": SVA_MIA
 }

@@ -229,7 +229,8 @@ with accelerator.main_process_first():
     # train_dataset, valid_dataset = dataset_prepare(args, tokenizer=tokenizer)
     data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=tokenizer)
     train_dataset, valid_dataset = data.train_dataset, data.test_dataset
-    print(">>> Avg length of the words in dataset: ", data.get_string_length())
+    train_length, valid_length = data.get_string_length()
+    logger.info(f">>> Avg length of the words in train dataset: {train_length}, valid dataset: {valid_length}")
 
 logger.info(f"Length of Train dataset: {len(train_dataset)}, Valid dataset: {len(valid_dataset)}")
     

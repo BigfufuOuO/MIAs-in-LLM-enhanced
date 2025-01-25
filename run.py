@@ -46,11 +46,13 @@ args = parser.parse_args()
 # main entry
 target_llm = FinetunedCasualLM(args=args,
                                model_path=args.target_model,)
+
 data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
+print('Average Length of the words in dataset:', data.get_string_length())
+
 attack = MemberInferenceAttack(metric=args.metric,)
 results = attack.execute(target_llm, 
                          data.train_dataset,
                          data.test_dataset,)
 results = attack.evaluate(args, results)
 print('RESULT:\n', results)
-print('Average Length of the words in dataset:', data.get_string_length())
