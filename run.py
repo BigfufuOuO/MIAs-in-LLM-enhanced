@@ -2,6 +2,7 @@ from data.factory import DataFactory
 from models.finetuned_llms import FinetunedCasualLM
 from attacks.MIA import MemberInferenceAttack
 import pandas as pd
+import multiprocess
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -16,6 +17,7 @@ parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets"
 
 # model definition
 parser.add_argument('--target_model', type=str, default="openai-community/gpt2", required=True, help="The target model to attack.")
+parser.add_argument('--refer_model', type=str, default="openai-community/gpt2", help="The reference model to take reference.")
 parser.add_argument('--model_name', type=str, default=None, help="The NAME to the original target model.")
 parser.add_argument('--data_path', type=str, default="data/echr", help="The path to the data.")
 
@@ -46,19 +48,25 @@ args = parser.parse_args()
 
 
 # ======================== MAIN ========================
-target_llm = FinetunedCasualLM(args=args,
-                               model_path=args.target_model,)
+if __name__ == '__main__':
+    target_llm = FinetunedCasualLM(args=args,
+                                model_path=args.target_model,)
+    if args.refer_model:
+        refer_llm = FinetunedCasualLM(args=args,
+                                    model_path=args.refer_model,)
+    else:
+        refer_llm = None
 
-# data
-data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
-print('Average Length of the string in dataset:', data.get_string_length())
-print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
+    # data
+    data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
+    print('Average Length of the string in dataset:', data.get_string_length())
+    print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
-# excute attack
-attack = MemberInferenceAttack(metric=args.metric,)
-results = attack.execute(target_llm, 
-                         data.train_dataset,
-                         data.test_dataset,)
-results = attack.evaluate(args, results)
-result_df = pd.DataFrame.from_dict(results, orient='index').T
-print(result_df)
+    # excute attack
+    attack = MemberInferenceAttack(metric=args.metric, ref_model=refer_llm)
+    results = attack.execute(target_llm, 
+                            data.train_dataset,
+                            data.test_dataset,)
+    results = attack.evaluate(args, results)
+    result_df = pd.DataFrame.from_dict(results, orient='index').T
+    print(result_df)

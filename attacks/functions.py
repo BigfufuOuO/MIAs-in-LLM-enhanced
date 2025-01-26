@@ -15,7 +15,9 @@ def loss(target: FinetunedCasualLM, text: str):
         target: The target to evaluate.
         text: The text to evaluate.
     """
-    return target.evaluate(text)
+    return {
+        "score": target.evaluate(text)
+    }
 
 def perplexity(target: FinetunedCasualLM, text: str):
     """
@@ -75,19 +77,21 @@ def Window(target: FinetunedCasualLM, text: str):
     else:
         return target.evaluate_ppl(input_ids, tokenized=True)
     
-def LiRASimple(target: FinetunedCasualLM, text: str):
+def LiRASimple(target: FinetunedCasualLM,
+               reference: FinetunedCasualLM, 
+               text: str):
     """
     Simple LIRA method (Without energy).
     https://arxiv.org/abs/2203.03929
     """
     ppl = target.evaluate_ppl(text)
-    ref_ppl = target.evaluate_ppl(text)
+    ref_ppl = reference.evaluate_ppl(text)
     return np.log(ppl) - np.log(ref_ppl)
 
 def Neighbour(target: FinetunedCasualLM, 
               reference: FinetunedCasualLM, 
               text: str, 
-              n_neighbor: int = 15):
+              n_neighbor: int = 5):
     """
     NEIGHBOR method.
     https://arxiv.org/abs/2305.18462
@@ -101,11 +105,11 @@ def Neighbour(target: FinetunedCasualLM,
     assert reference is not None, 'Neighborhood MIA requires a reference target'
     neighbor_avg = 0
     neighbors = reference.generate_neighbors(text, n=n_neighbor)
-    # for neighbor in neighbors:
-    #     neighbor_avg += target.evaluate(neighbor)
-    # neighbor_avg /= len(neighbors)
+    
     loss_neigh = [target.evaluate(neighbor) for neighbor in neighbors]
-    return target.evaluate(text) - np.mean(loss_neigh)
+    return {
+        "score": target.evaluate(text) - np.mean(loss_neigh)
+    }
 
 def Min_k(target: FinetunedCasualLM, 
           text: str, 

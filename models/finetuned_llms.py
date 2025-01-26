@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from heapq import nlargest
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import time
 
 from .LLMBase import LLMBase
 
@@ -172,7 +173,7 @@ class FinetunedCasualLM(LLMBase):
             input_ids = text
         else:
             # Encode the text prompt and generate a response
-            input_ids = self._tokenizer.encode(text, return_tensors='pt', truncation=True, max_length=self.max_seq_len)
+            input_ids = self._tokenizer(text, return_tensors='pt', truncation=True, max_length=self.max_seq_len).input_ids
 
         # Implement the code to query the open-source model
         input_ids = input_ids.to(self.model.device)
@@ -196,7 +197,7 @@ class FinetunedCasualLM(LLMBase):
         loss = self.evaluate(text, tokenized=tokenized)
         return np.exp(loss)
 
-    def generate_neighbors(self, text, p=0.7, k=5, n=50):
+    def generate_neighbors(self, text, p=0.7, k=3, n=5):
         """
         For TEXT, generates a neighborhood of single-token replacements, considering the best K token replacements
         at each position in the sequence and returning the top N neighboring sequences.
@@ -216,28 +217,47 @@ class FinetunedCasualLM(LLMBase):
                                     max_length=self.max_seq_len).input_ids.to(self.model.device)
         dropout = torch.nn.Dropout(p)
 
+
         seq_len = tokenized.shape[1]
         cand_scores = {}
         for target_index in range(1, seq_len):
             target_token = tokenized[0, target_index]
 
-            # Embed the sequence
-            if isinstance(self.model, transformers.LlamaForCausalLM):
-                embedding = self.model.get_input_embeddings()(tokenized)
-            elif isinstance(self.model, transformers.GPT2LMHeadModel):
-                embedding = self.model.transformer.wte.weight[tokenized]
-            else:
-                raise RuntimeError(f'Unsupported model type for neighborhood generation: {type(self.model)}')
+        
+        seq_len = tokenized.shape[1]
+        cand_scores = {}
+        for target_index in range(1, seq_len):
+            target_token = tokenized[0, target_index]
+
+        # Embed the sequence
+        if isinstance(self.model, transformers.LlamaForCausalLM):
+            embedding = self.model.get_input_embeddings()(tokenized)
+        elif isinstance(self.model, transformers.GPT2LMHeadModel):
+            embedding = self.model.transformer.wte.weight[tokenized]
+        elif isinstance(self.model, transformers.RobertaForCausalLM):
+            embedding = self.model.roberta.embeddings(tokenized)
+        else:
+            raise RuntimeError(f'Unsupported model type for neighborhood generation: {type(self.model)}')
+        
+        # Apply dropout all in once 
+        dropout_embedding = dropout(embedding)
+
+        seq_len = tokenized.shape[1]
+        cand_scores = {}
+        for target_index in range(1, seq_len):
+            target_token = tokenized[0, target_index]
 
             # Apply dropout only to the target token embedding in the sequence
-            embedding = torch.cat([
-                embedding[:, :target_index, :],
-                dropout(embedding[:, target_index:target_index + 1, :]),
-                embedding[:, target_index + 1:, :]
+            modified_embedding = torch.cat([
+                embedding[:, :target_index],
+                dropout_embedding[:, target_index].unsqueeze(0), # apply dropout to the target token, unsqueeze to match the shape
+                embedding[:, target_index+1:]
             ], dim=1)
 
             # Get model's predicted posterior distributions over all positions in the sequence
-            probs = torch.softmax(self.model(inputs_embeds=embedding).logits, dim=2)
+            with torch.no_grad():
+                logits = self.model(inputs_embeds=modified_embedding).logits
+                probs = torch.softmax(logits, dim=2)
             original_prob = probs[0, target_index, target_token].item()
 
             # Find the K most probable token replacements, not including the target token
@@ -246,11 +266,12 @@ class FinetunedCasualLM(LLMBase):
 
             # Score each candidate
             for prob, cand in zip(cand_probs, cands):
-                if cand == target_token:
-                    continue
-                denominator = (1 - original_prob) if original_prob < 1 else 1E-6
-                score = prob.item() / denominator
-                cand_scores[(cand, target_index)] = score
+                if not cand == target_token:
+                    denominator = (1 - original_prob) if original_prob < 1 else 1E-6
+                    score = prob.item() / denominator
+                    cand_scores[(cand, target_index)] = score
+                
+        
 
         # Generate and return the neighborhood of sequences
         neighborhood = []

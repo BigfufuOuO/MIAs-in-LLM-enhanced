@@ -13,6 +13,7 @@ from models.finetuned_llms import FinetunedCasualLM
 from .functions import function_map
 from .utils import draw_auc_curve
 import inspect
+from datasets import Dataset
 
 class MemberInferenceAttack(AttackBase):
     """
@@ -26,7 +27,7 @@ class MemberInferenceAttack(AttackBase):
     def __init__(self, 
                  metric: str = 'ppl', 
                  ref_model=None, 
-                 n_neighbor=50):
+                 n_neighbor=5):
         # self.extraction_prompt = ["Tell me about..."]  # TODO this is just an example to extract data.
         self.metric = metric
         if self.metric not in function_map:
@@ -35,7 +36,7 @@ class MemberInferenceAttack(AttackBase):
         self.n_neighbor = n_neighbor
     
     @torch.no_grad()
-    def get_score(self, model: FinetunedCasualLM, text: str):
+    def get_score(self, model: FinetunedCasualLM, dataset: Dataset):
         """
         Return score. Smaller value means membership.
         Function maps the method to the corresponding evaluation function.
@@ -45,9 +46,8 @@ class MemberInferenceAttack(AttackBase):
         
         """
         target = model
-        text = text
         reference = self.ref_model
-        n_neighbor = self.n_neighbor
+        n_neighbor = 5
         k = 0.1
         
         # get locals
@@ -60,7 +60,9 @@ class MemberInferenceAttack(AttackBase):
             for name in required_args if name in locals_
         }
         
-        score = function_map[self.metric](**extracted_args)
+        score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+                            batched=False,
+                            desc=f"Evaluating {self.metric}")
         return score
     
     def execute(self, 
@@ -97,15 +99,9 @@ class MemberInferenceAttack(AttackBase):
             resume_i = -1
             
         # train set
-        for i, sample in enumerate(tqdm(train_set, desc="Train set")):
-            if i <= resume_i:
-                continue
-            score = self.get_score(target, sample['text'])
-            results['score'].append(score)
-            results['membership'].append(1)
-            # if cache_file exists
-            if cache_file and (i+1) % 100 == 0:
-                torch.save({'results': results, 'i': i, 'member': 1}, cache_file)
+        print("Evaluating train set:")
+        results['score'] = self.get_score(target, train_set)['score']
+        results['membership'] = [1] * len(train_set)
         print(f"Train avg score: {np.mean(np.array(results['score']))}")
         
         test_scores = []
@@ -117,15 +113,10 @@ class MemberInferenceAttack(AttackBase):
             resume_i = -1
         
         # test set
-        for i, sample in enumerate(tqdm(test_set, desc="Test set")):
-            if i <= resume_i:
-                continue
-            score = self.get_score(target, sample['text'])
-            results['score'].append(score)
-            test_scores.append(score)
-            results['membership'].append(0)
-            if cache_file and (i+1) % 30 == 0:
-                torch.save({'results': results, 'i': i, 'member': 0}, cache_file)
+        print("Evaluating test set:")
+        test_scores = self.get_score(target, test_set)['score']
+        results['score'] += test_scores
+        results['membership'] += [0] * len(test_set)
         print(f"Test avg score: {np.mean(np.array(test_scores))}")
         # save the results
         if cache_file:

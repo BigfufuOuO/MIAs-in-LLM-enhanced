@@ -71,9 +71,12 @@ parser.add_argument("--add_eos_token", action="store_true", help="Add EOS token 
 parser.add_argument("--add_bos_token", action="store_true", help="Add BOS token to tokenizer", default=False)
 parser.add_argument("--validation_split_percentage", default=0.2, help="The percentage of the train set used as validation set in case there's no validation split")
 
-# debug
+# debug and split
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
 parser.add_argument("--small_dataset", action="store_true", help="Use small dataset.")
+parser.add_argument("--split_dataset", action="store_true", help="Use split dataset.")
+parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning of the split.")
+parser.add_argument("--split_end", type=float, default=0.2, help="The end of the split.")
 
 args = parser.parse_args()
 
