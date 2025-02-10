@@ -116,7 +116,7 @@ def Min_k(target: FinetunedCasualLM,
           k: float = 0.1):
     """
     Min K method.
-    https://arxiv.org/abs/2305.18462
+    https://arxiv.org/pdf/2310.16789
     
     Args:
         target: The target to evaluate.
