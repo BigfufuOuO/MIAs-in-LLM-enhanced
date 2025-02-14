@@ -81,9 +81,13 @@ def Window(target: FinetunedCasualLM, text: str):
         for idx in range(len(input_ids)- win_size):
             _ppl = target.evaluate_ppl(input_ids[idx, idx+win_size], tokenized=True)
             ppls.append(_ppl.item())
-        return np.min(ppls)
+        return {
+            "score": np.min(ppls)
+        }
     else:
-        return target.evaluate_ppl(input_ids, tokenized=True)
+        return {
+            "score": target.evaluate_ppl(input_ids, tokenized=True)
+        }
     
 def LiRASimple(target: FinetunedCasualLM,
                reference: FinetunedCasualLM, 
@@ -237,10 +241,14 @@ function_map = {
     "loss": loss,
     "ppl": perplexity,
     "refer": Refer,
+    "refer-base": Refer,
+    "refer-orcale": Refer,
     "zlib": Zlib,
     "lowercase": Lowercase,
     "window": Window,
     "lira": LiRASimple,
+    "lira-base": LiRASimple,
+    "lira-orcale": LiRASimple,
     "neighbor": Neighbour_inbatch,
     "min_k": Min_k,
     "min_k++": Min_k_plus,

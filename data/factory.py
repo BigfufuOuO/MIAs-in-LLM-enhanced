@@ -39,10 +39,20 @@ class DataFactory:
         
         if args.split_dataset:
             print("Using split dataset.")
-            selected_indices = range(int(len(train)*args.split_begin), int(len(train)*args.split_end))
-            train = train.select(selected_indices)
-            selected_indices = range(int(len(test)*args.split_begin), int(len(test)*args.split_end))
-            test = test.select(selected_indices)
+            np.random.seed(42)
+            # reshuffle the indices
+            train_indices = np.arange(len(train))
+            test_indices = np.arange(len(test))
+            train_indices = np.random.permutation(train_indices)
+            test_indices = np.random.permutation(test_indices)
+            
+            start = int(len(train) * args.split_begin)
+            end = int(len(train) * args.split_end)
+            train = train.select(train_indices[start:end])
+            
+            start = int(len(test) * args.split_begin)
+            end = int(len(test) * args.split_end)
+            test = test.select(test_indices[start:end])
             return train, test
             
         return train, test

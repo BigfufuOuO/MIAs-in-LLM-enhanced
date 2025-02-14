@@ -134,6 +134,8 @@ class MemberInferenceAttack(AttackBase):
         Evaluate the results.
         """
         score_dict = {}
+        # Metric
+        score_dict['metric'] = args.metric
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
         # score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
@@ -173,4 +175,6 @@ class MemberInferenceAttack(AttackBase):
             actual_rate = tpr[np.where(tpr<=rate)[0][-1]]
             score_dict[f'FPR@{rate*100}%TPR({actual_rate:.5f})'] = fpr_rate
         # score_dict[r'TPR@0.1%FPR'] = tpr[np.where(fpr>=0.001)[0][0]]
+        
+        
         return score_dict

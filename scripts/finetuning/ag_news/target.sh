@@ -5,7 +5,7 @@ export HF_ENDPOINT="http://hf-mirror.com"
 
 model_name="openai-community/gpt2"
 dataset="ag_news"
-model_type="target"
+model_type="target_base"
 block_size=64
 output_dir="./ft_llms/"$model_name"/"$dataset"/"bs$block_size"/"$model_type"/"
 

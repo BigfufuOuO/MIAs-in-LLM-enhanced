@@ -17,7 +17,7 @@ parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets"
 
 # model definition
 parser.add_argument('--target_model', type=str, default="openai-community/gpt2", required=True, help="The target model to attack.")
-parser.add_argument('--refer_model', type=str, default="openai-community/gpt2", help="The reference model to take reference.")
+parser.add_argument('--refer_model', type=str, help="The reference model to take reference.")
 parser.add_argument('--model_name', type=str, default=None, help="The NAME to the original target model.")
 parser.add_argument('--data_path', type=str, default="data/echr", help="The path to the data.")
 
@@ -68,5 +68,10 @@ if __name__ == '__main__':
                             data.train_dataset,
                             data.test_dataset,)
     results = attack.evaluate(args, results)
+    
+    # Display result
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.expand_frame_repr', False)  # Avoid line break
     result_df = pd.DataFrame.from_dict(results, orient='index').T
-    print(result_df)
+    print("=========ENDING==========")
+    print(result_df.to_string(index=False))
