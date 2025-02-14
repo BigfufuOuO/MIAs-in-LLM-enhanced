@@ -218,17 +218,6 @@ class FinetunedCasualLM(LLMBase):
         dropout = torch.nn.Dropout(p)
 
 
-        seq_len = tokenized.shape[1]
-        cand_scores = {}
-        for target_index in range(1, seq_len):
-            target_token = tokenized[0, target_index]
-
-        
-        seq_len = tokenized.shape[1]
-        cand_scores = {}
-        for target_index in range(1, seq_len):
-            target_token = tokenized[0, target_index]
-
         # Embed the sequence
         if isinstance(self.model, transformers.LlamaForCausalLM):
             embedding = self.model.get_input_embeddings()(tokenized)
@@ -282,6 +271,91 @@ class FinetunedCasualLM(LLMBase):
             neighborhood.append(self._tokenizer.batch_decode(neighbor)[0])
 
         return neighborhood
+    
+    def generate_neighbors_inbatch(self, texts, p=0.7, k=3, n=5):
+        """
+        For TEXT, generates a neighborhood of single-token replacements, considering the best K token replacements
+        at each position in the sequence and returning the top N neighboring sequences.
+        
+        This is a method that generates the neighborhood in batch.
+
+        https://aclanthology.org/2023.findings-acl.719.pdf
+        
+        Args:
+            text (str): The input text to generate the neighborhood.
+            p (float): The dropout probability.
+            k (int): The number of top candidates to consider at each position.
+            n (int): The number of neighboring sequences to return.
+        """
+        tokenized = self._tokenizer(texts, 
+                                    return_tensors='pt', 
+                                    truncation=True,
+                                    max_length=self.max_seq_len).input_ids.to(self.model.device)
+        batch_size = tokenized.shape[0]
+        
+        dropout = torch.nn.Dropout(p)
+        
+        if isinstance(self.model, transformers.RobertaForCausalLM):
+            embedding = self.model.roberta.embeddings(tokenized)
+        else:
+            raise RuntimeError(f'Unsupported model type for neighborhood generation: {type(self.model)}')
+        
+        # Apply dropout all in once
+        dropout_embedding = dropout(embedding)
+        
+        # sequence length
+        seq_len = tokenized.shape[1]
+        all_scores = torch.empty(batch_size, 0, k + 1, device=self.model.device)
+        all_cands = torch.empty(batch_size, 0, k + 1, device=self.model.device, dtype=torch.int)
+        for target_index in range(1, seq_len):
+            target_token = tokenized[:, target_index]
+
+            # Apply dropout only to the target token embedding in the sequence
+            modified_embedding = torch.cat([
+                embedding[:, :target_index],
+                dropout_embedding[:, target_index].unsqueeze(1), # apply dropout to the target token, unsqueeze to match the shape
+                embedding[:, target_index+1:]
+            ], dim=1)
+
+            # Get model's predicted posterior distributions over all positions in the sequence
+            with torch.no_grad():
+                logits = self.model(inputs_embeds=modified_embedding).logits
+                probs = torch.softmax(logits, dim=2)
+            batch_indices = torch.arange(batch_size)
+            original_probs = probs[batch_indices, target_index, target_token]   # shape: [batch_size], original probabilities
+
+            # Find the K most probable token replacements, not including the target token
+            # Find top K+1 first because target could still appear as a candidate
+            cand_probs, cands = torch.topk(probs[:, target_index, :], k + 1)
+
+            # mask the target token
+            mask = cands == target_token.unsqueeze(1)
+            topk_probs = torch.where(mask, torch.tensor(0.0), cand_probs)
+            # Score each candidate
+            topk_probs = topk_probs / (1 - original_probs.unsqueeze(1) + 1e-6)
+            all_scores = torch.cat([all_scores, topk_probs.unsqueeze(1)], dim=1)
+            all_cands = torch.cat([all_cands, cands.unsqueeze(1)], dim=1)
+                
+        # Generate and return the neighborhood of sequences
+        flatten_scores = all_scores.view(batch_size, -1) # [batch_size, seq_len * k+1]
+        top_scores, top_indices = torch.topk(flatten_scores, n, dim=1)
+        flatten_cands = all_cands.view(batch_size, -1)
+        # top_scores: [batch_size, n], top n scores
+        # top_indices: [batch_size, n], corresponding indices for top n scores
+        neigh_position = top_indices // (all_scores.shape[2]) + 1
+        neigh_tokens = flatten_cands.gather(1, top_indices)
+        
+        neighborhoods = np.empty((batch_size, n), dtype=object)
+        for i in range(n):
+            neighbor = torch.clone(tokenized)
+            neighbor[batch_indices, neigh_position[:, i]] = neigh_tokens[:, i]
+            new_neighbor = np.array(self._tokenizer.batch_decode(neighbor))
+            neighborhoods[:, i] = new_neighbor
+            
+        
+        neighborhoods = neighborhoods.tolist()
+        return neighborhoods
+        
 
 
 class PeftCasualLM(FinetunedCasualLM):

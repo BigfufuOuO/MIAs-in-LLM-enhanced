@@ -27,7 +27,9 @@ def perplexity(target: FinetunedCasualLM, text: str):
         target: The target to evaluate.
         text: The text to evaluate.
     """
-    return target.evaluate_ppl(text)
+    return {
+        "score": target.evaluate_ppl(text)
+    }
 
 def Refer(target: FinetunedCasualLM, 
           reference: FinetunedCasualLM, 
@@ -38,7 +40,9 @@ def Refer(target: FinetunedCasualLM,
     """
     ppl = target.evaluate_ppl(text)
     ref_ppl = reference.evaluate_ppl(text)
-    return np.log(ppl) / np.log(ref_ppl)
+    return {
+        "score": np.log(ppl) / np.log(ref_ppl)
+    }
 
 def Zlib(target: FinetunedCasualLM, text: str):
     """
@@ -47,7 +51,9 @@ def Zlib(target: FinetunedCasualLM, text: str):
     """
     ppl = target.evaluate_ppl(text)
     num_bits = len(zlib.compress(bytes(text, 'utf-8')))
-    return ppl / num_bits
+    return {
+        "score": ppl / num_bits
+    }
 
 def Lowercase(target: FinetunedCasualLM, text: str):
     """
@@ -56,7 +62,9 @@ def Lowercase(target: FinetunedCasualLM, text: str):
     """
     ppl = target.evaluate_ppl(text)
     ref_ppl = target.evaluate_ppl(text.lower())
-    return ppl / ref_ppl
+    return {
+        "score": ppl / ref_ppl
+    }
 
 def Window(target: FinetunedCasualLM, text: str):
     """
@@ -86,7 +94,9 @@ def LiRASimple(target: FinetunedCasualLM,
     """
     ppl = target.evaluate_ppl(text)
     ref_ppl = reference.evaluate_ppl(text)
-    return np.log(ppl) - np.log(ref_ppl)
+    return {
+        "score": np.log(ppl) - np.log(ref_ppl)
+    }
 
 def Neighbour(target: FinetunedCasualLM, 
               reference: FinetunedCasualLM, 
@@ -109,6 +119,34 @@ def Neighbour(target: FinetunedCasualLM,
     loss_neigh = [target.evaluate(neighbor) for neighbor in neighbors]
     return {
         "score": target.evaluate(text) - np.mean(loss_neigh)
+    }
+    
+def Neighbour_inbatch(target: FinetunedCasualLM,
+                      reference: FinetunedCasualLM,
+                      n_neighbor: int = 5,
+                      text: list = None):
+    """
+    NEIGHBOR method in batch.
+    https://arxiv.org/abs/2305.18462
+    
+    Args:
+        target: The target to evaluate.
+        reference: The reference target to evaluate.
+        text: The text to evaluate.
+        n_neighbor: The number of neighbors to generate.
+    """
+    assert reference is not None, 'Neighborhood MIA requires a reference target'
+    batch_neighbors = reference.generate_neighbors_inbatch(text, n=n_neighbor)
+    
+    scores = []
+    for batch_neighbor, batch_text in zip(batch_neighbors, text):
+        loss_neigh = [target.evaluate(neighbor) for neighbor in batch_neighbor]
+        loss_text = target.evaluate(batch_text)
+        batch_score = loss_text - np.mean(loss_neigh)
+        scores.append(batch_score)
+    
+    return {
+        "score": scores
     }
 
 def Min_k(target: FinetunedCasualLM, 
@@ -139,7 +177,9 @@ def Min_k(target: FinetunedCasualLM,
     token_log_probs = token_log_probs.to(torch.float32)
     topk = np.sort(token_log_probs.cpu())[:k_length]
     # TODO: Check if this is correct
-    return - np.mean(topk).item()
+    return {
+        "score": - np.mean(topk).item()
+    }
 
 def Min_k_plus(target: FinetunedCasualLM, 
                text: str, 
@@ -174,7 +214,9 @@ def Min_k_plus(target: FinetunedCasualLM,
     k_length = int(len(token_log_probs) * k)
     topk = np.sort(mink_plus.cpu())[:k_length]
     # TODO: Check if this is correct
-    return - np.mean(topk).item()
+    return {
+        "score": - np.mean(topk).item()
+    }
 
 def SVA_MIA(target: FinetunedCasualLM, 
             text: str, ):
@@ -199,7 +241,7 @@ function_map = {
     "lowercase": Lowercase,
     "window": Window,
     "lira": LiRASimple,
-    "neighbor": Neighbour,
+    "neighbor": Neighbour_inbatch,
     "min_k": Min_k,
     "min_k++": Min_k_plus,
     "sva_mia": SVA_MIA

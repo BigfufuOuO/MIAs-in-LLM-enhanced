@@ -5,8 +5,8 @@ export HF_ENDPOINT="http://hf-mirror.com"
 
 model_name="openai-community/gpt2"
 dataset="ag_news"
-model_type="target_orcale"
-block_size=32
+model_type="target"
+block_size=64
 output_dir="./ft_llms/"$model_name"/"$dataset"/"bs$block_size"/"$model_type"/"
 
 
@@ -16,7 +16,7 @@ accelerate launch ./finetune/finetuning_llms.py \
     --dataset_name $dataset \
     --block_size $block_size \
     --eval_steps 500 \
-    --save_epochs 2000 \
+    --save_epochs 500 \
     --log_steps 500 \
     --packing \
     --split_dataset \

@@ -60,9 +60,15 @@ class MemberInferenceAttack(AttackBase):
             for name in required_args if name in locals_
         }
         
-        score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
-                            batched=False,
-                            desc=f"Evaluating {self.metric}")
+        if self.metric == 'neighbor':
+            score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+                                batched=True,
+                                batch_size=32,
+                                desc=f"Evaluating {self.metric}")
+        else:
+            score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+                                batched=False,
+                                desc=f"Evaluating {self.metric}")
         return score
     
     def execute(self, 
@@ -130,15 +136,15 @@ class MemberInferenceAttack(AttackBase):
         score_dict = {}
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
-        score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
-        score_dict['test(nonmember)_score'] = np.mean(results['score'][results['membership']==0])
+        # score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
+        # score_dict['test(nonmember)_score'] = np.mean(results['score'][results['membership']==0])
         
         # follow https://arxiv.org/pdf/2203.03929.pdf
         # threshold = np.quantile(results['score'][results['membership']==0], 0.9)
-        # for computing AUC, you can use any threshold.
+        # for computings AUC, you can use any threshold.
         # threshold = np.quantile(results['score'], 0.5)
         threshold = np.mean(results['score'][results['membership']==0])
-        score_dict['threshold'] = threshold
+        # score_dict['threshold'] = threshold
         results['score'] -= threshold
         
         # this is for the ease of using roc_auc_score, which is equivalent to varying threshold.
