@@ -3,11 +3,13 @@ export CUDA_VISIBLE_DEVICES=3,4
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name="openai-community/gpt2"
+model_name="openai-community/gpt2-large"
 dataset="ag_news"
 model_type="refer_orcale"
-block_size=64
+block_size=32
 output_dir="./ft_llms/"$model_name"/"$dataset"/"bs$block_size"/"$model_type"/"
+
+eval_steps=500
 
 
 accelerate launch ./finetune/finetuning_llms.py \
@@ -15,9 +17,6 @@ accelerate launch ./finetune/finetuning_llms.py \
     --model_path $model_name \
     --dataset_name $dataset \
     --block_size $block_size \
-    --eval_steps 500 \
-    --save_epochs 500 \
-    --log_steps 500 \
     --packing \
     --split_dataset \
     --split_begin 0.2 --split_end 0.4 \

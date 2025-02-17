@@ -173,7 +173,39 @@ class FinetunedCasualLM(LLMBase):
             input_ids = text
         else:
             # Encode the text prompt and generate a response
-            input_ids = self._tokenizer(text, return_tensors='pt', truncation=True, max_length=self.max_seq_len).input_ids
+            input_ids = self._tokenizer(text, 
+                                        return_tensors='pt', 
+                                        truncation=True, 
+                                        max_length=self.max_seq_len).input_ids
+
+        # Implement the code to query the open-source model
+        input_ids = input_ids.to(self.model.device)
+        with torch.no_grad():
+            output = self.model(
+                input_ids=input_ids,
+                labels=input_ids.clone(),
+            )
+        return output.loss.item()
+    
+    def evaluate_batch(self, texts, tokenized=False):
+        """
+        Evaluate an open-source model with a batch of text prompts.
+
+        Args:
+            text (list): The batched text prompts to query the model.
+
+        Returns:
+            loss: The model's average loss.
+        """
+        if tokenized:
+            input_ids = texts
+        else:
+            # Encode the text prompt and generate a response
+            input_ids = self._tokenizer(texts, 
+                                        return_tensors='pt', 
+                                        truncation=True, 
+                                        padding=True,
+                                        max_length=self.max_seq_len).input_ids
 
         # Implement the code to query the open-source model
         input_ids = input_ids.to(self.model.device)

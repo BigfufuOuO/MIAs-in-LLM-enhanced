@@ -2,7 +2,6 @@ from data.factory import DataFactory
 from models.finetuned_llms import FinetunedCasualLM
 from attacks.MIA import MemberInferenceAttack
 import pandas as pd
-import multiprocess
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -74,4 +73,4 @@ if __name__ == '__main__':
     pd.set_option('display.expand_frame_repr', False)  # Avoid line break
     result_df = pd.DataFrame.from_dict(results, orient='index').T
     print("=========ENDING==========")
-    print(result_df.to_string(index=False))
+    print(result_df)

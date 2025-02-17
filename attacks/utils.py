@@ -2,10 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
 import os
+import pandas as pd
 
 def draw_auc_curve(fpr, tpr,
                    title='ROC curve',
-                   save_path='./results'):
+                   save_path='./results',
+                   metric='loss'):
     """
     Draw the ROC curve and save it to the save_path.
     """
@@ -26,4 +28,16 @@ def draw_auc_curve(fpr, tpr,
     # save the figure
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    plt.savefig(os.path.join(save_path, 'roc_curve.png'))
+    plt.savefig(os.path.join(save_path, f'{metric}.png'))
+    
+def save_to_csv(results, 
+                save_path="./results"):
+    """
+    Save the results to a csv file.
+    """
+    df = pd.DataFrame.from_dict(results, orient='index').T
+    save_path = os.path.join(save_path, 'results.csv')
+    df.to_csv(save_path, 
+              mode='a',
+              header=True if not os.path.exists(save_path) else False,
+              index=False)

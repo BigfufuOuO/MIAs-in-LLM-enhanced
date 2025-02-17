@@ -1,47 +1,105 @@
 Loading model in int8: False or half: True
-> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100'.
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
 Train dataset columns: ['text', 'label'], select text column: text
 Block size: 64, max buffer size: 235929.6
 Using small dataset.
-Average Length of the string in dataset: (289.89318586698334, 290.3803367408298)
-Data preview: {'text': ' Sunday #39;s big news for South Florida.iMac G5:  #147;Marvel on the Inside, too #148;  #147;The new G5 iMac is the finest personal computer I #146;ve ever used, hands down, #148; writes Mike Wendland for the'} 
- {'text': ' Thursday for failing to arrest and turn over war crimes suspects to an international tribunal.Bosnia Serb PM Resigns, Rejects Western Pressure  BANJA LUKA, Bosnia (Reuters) -  Bosnian Serb Prime Minister  Dragan Mikerevic stepped down on Friday after top peace'}
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
 Evaluating train set:
-Train avg score: 27.87861287505683
+Train avg score: 2.934655591658172
 Evaluating test set:
-Test avg score: 43.779016298245644
-metric       acc       auc TPR@0.1%FPR(0.00120) TPR@0.5%FPR(0.00511) TPR@1.0%FPR(0.01022) TPR@5.0%FPR(0.05111) FPR@99.0%TPR(0.98990) FPR@95.0%TPR(0.94722)
-window  0.762531  0.681283             0.001262             0.006681              0.01247             0.107037              0.928142              0.797956
+Test avg score: 3.4138674583911235
+=========ENDING==========
+metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01179) TPR@5.0%FPR(0.05062) FPR@99.0%TPR(0.98998) FPR@95.0%TPR(0.94784)
+  loss  0.771698  0.749739             0.004927             0.011553             0.022426              0.08121              0.897365              0.709431
 Loading model in int8: False or half: True
-> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100'.
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
+Train dataset columns: ['text', 'label'], select text column: text
+Block size: 64, max buffer size: 235929.6
+Using small dataset.
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
+Evaluating train set:
+Train avg score: 21.614147163705344
+Evaluating test set:
+Test avg score: 35.58928461015265
+=========ENDING==========
+metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01179) TPR@5.0%FPR(0.05062) FPR@99.0%TPR(0.98998) FPR@95.0%TPR(0.94784)
+   ppl  0.808543  0.749739             0.004927             0.011553             0.022426              0.08121              0.897365              0.709431
+Loading model in int8: False or half: True
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
 Loading model in int8: False or half: True
 > Loading the provided openai-community/gpt2 checkpoint from 'openai-community/gpt2'.
 Train dataset columns: ['text', 'label'], select text column: text
 Block size: 64, max buffer size: 235929.6
 Using small dataset.
-Average Length of the string in dataset: (289.89318586698334, 290.3803367408298)
-Data preview: {'text': ' Sunday #39;s big news for South Florida.iMac G5:  #147;Marvel on the Inside, too #148;  #147;The new G5 iMac is the finest personal computer I #146;ve ever used, hands down, #148; writes Mike Wendland for the'} 
- {'text': ' Thursday for failing to arrest and turn over war crimes suspects to an international tribunal.Bosnia Serb PM Resigns, Rejects Western Pressure  BANJA LUKA, Bosnia (Reuters) -  Bosnian Serb Prime Minister  Dragan Mikerevic stepped down on Friday after top peace'}
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
 Evaluating train set:
-Train avg score: -1.495197649523085
+Train avg score: 0.6708536088372805
 Evaluating test set:
-Test avg score: -1.0789700231133494
-   metric      acc       auc TPR@0.1%FPR(0.00180) TPR@0.5%FPR(0.00511) TPR@1.0%FPR(0.01052) TPR@5.0%FPR(0.05021) FPR@99.0%TPR(0.98924) FPR@95.0%TPR(0.94849)
-lira-base  0.68526  0.698647             0.000965             0.005716             0.013435             0.109338              0.844558              0.709561
+Test avg score: 0.782869139081059
+=========ENDING==========
+    metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01040) TPR@5.0%FPR(0.05062) FPR@99.0%TPR(0.98998) FPR@95.0%TPR(0.94988)
+refer-base  0.822052  0.800501             0.005607             0.018858             0.029732             0.083588              0.759362              0.592233
 Loading model in int8: False or half: True
-> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100'.
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
 Loading model in int8: False or half: True
-> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs64/refer_orcale/checkpoint-2100 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs64/refer_orcale/checkpoint-2100'.
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/refer_orcale/checkpoint-900 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/refer_orcale/checkpoint-900'.
 Train dataset columns: ['text', 'label'], select text column: text
 Block size: 64, max buffer size: 235929.6
 Using small dataset.
-Average Length of the string in dataset: (289.89318586698334, 290.3803367408298)
-Data preview: {'text': ' Sunday #39;s big news for South Florida.iMac G5:  #147;Marvel on the Inside, too #148;  #147;The new G5 iMac is the finest personal computer I #146;ve ever used, hands down, #148; writes Mike Wendland for the'} 
- {'text': ' Thursday for failing to arrest and turn over war crimes suspects to an international tribunal.Bosnia Serb PM Resigns, Rejects Western Pressure  BANJA LUKA, Bosnia (Reuters) -  Bosnian Serb Prime Minister  Dragan Mikerevic stepped down on Friday after top peace'}
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
 Evaluating train set:
-Train avg score: -0.3735401579433269
+Train avg score: 0.8662027596571588
 Evaluating test set:
-Test avg score: -0.001112212492483464
+Test avg score: 1.000255985657088
 =========ENDING==========
-     metric       acc       auc TPR@0.1%FPR(0.00120) TPR@0.5%FPR(0.00541) TPR@1.0%FPR(0.01263) TPR@5.0%FPR(0.05833) FPR@99.0%TPR(0.98887) FPR@95.0%TPR(0.94158)
-lira-orcale  0.902369  0.980319             0.334249             0.754008             0.818958             0.927108              0.352977              0.082081
+      metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01040) TPR@5.0%FPR(0.06935) FPR@99.0%TPR(0.98862) FPR@95.0%TPR(0.94886)
+refer-orcale  0.892331  0.996341             0.001699               0.9684             0.993034              0.99949              0.007628              0.004854
+Loading model in int8: False or half: True
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
+Train dataset columns: ['text', 'label'], select text column: text
+Block size: 64, max buffer size: 235929.6
+Using small dataset.
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
+Evaluating train set:
+Train avg score: 0.05791723482323194
+Evaluating test set:
+Test avg score: 0.09524964838520301
+=========ENDING==========
+metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01040) TPR@5.0%FPR(0.05062) FPR@99.0%TPR(0.98998) FPR@95.0%TPR(0.94988)
+  zlib  0.808406  0.757767             0.007305             0.019708             0.031431             0.101087              0.887656              0.702497
+Loading model in int8: False or half: True
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
+Train dataset columns: ['text', 'label'], select text column: text
+Block size: 64, max buffer size: 235929.6
+Using small dataset.
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
+Evaluating train set:
+Train avg score: 0.30277368735108834
+Evaluating test set:
+Test avg score: 0.3747082444034198
+=========ENDING==========
+   metric       acc       auc TPR@0.1%FPR(0.00139) TPR@0.5%FPR(0.00555) TPR@1.0%FPR(0.01040) TPR@5.0%FPR(0.05132) FPR@99.0%TPR(0.98981) FPR@95.0%TPR(0.94903)
+lowercase  0.706605  0.671378             0.009174             0.034319             0.057424             0.173802              0.956311              0.839112
+Loading model in int8: False or half: True
+> Loading the provided ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365 checkpoint from 'ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1365'.
+Train dataset columns: ['text', 'label'], select text column: text
+Block size: 64, max buffer size: 235929.6
+Using small dataset.
+Average Length of the string in dataset: (578.9458036017669, 578.8280166435507)
+Data preview: {'text': ' introduced a new on-demand call center and help desk application service called Supportforce.HUM.. WHY THE EARTH #39;S SINGING SCIENTISTS believe they have finally worked out what makes the Earth sing. They have long been mystified by a constant deep drone, far below the range of the human ear, which has been picked up by seismic equipment.AT amp;T reaches out to data-driven profits With its new Ogo mobile device, AT amp;T Wireless says goodbye to voice traffic and embraces the IM-savvy youth market. For AT amp;T Wireless, talk clearly is overrated'} 
+ {'text': ' the Boston Red Sox by two of their fans, the novelists Stephen King and Stewart O\'Nan.EU takes over Bosnia mission The EU is due to begin is largest peacekeeping operation, taking over from the Nato mission in Bosnia.Belgrade attack \'was road rage\' A reported assassination attempt on the Serbian president was a case of "road rage" officials say.French party\'s \'yes to EU treaty\' France\'s Socialist Party votes "yes" in an internal vote on the European Constitution, party officials say.Calpers Ouster Puts Focus on How Funds Wield Power The ouster of the president of California\'s public'}
+Evaluating train set:
+Train avg score: 21.614147163705344
+Evaluating test set:

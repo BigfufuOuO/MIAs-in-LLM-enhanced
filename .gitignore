@@ -11,3 +11,6 @@ cache/
 # wandb files
 wandb/
 results/
+
+# logs
+logs/

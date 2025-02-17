@@ -5,14 +5,22 @@ export HF_ENDPOINT="http://hf-mirror.com"
 echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-block_size=64
-target_model="ft_llms/openai-community/gpt2/ag_news/bs64/target/checkpoint-2100"
-model_name="openai-community/gpt2"
+block_size=32
+target_model="ft_llms/openai-community/gpt2-large/ag_news/bs32/target_base/checkpoint-2270"
+model_name="openai-community/gpt2-large"
 
-refer_model_base="openai-community/gpt2"
-refer_model_orcale="ft_llms/openai-community/gpt2/ag_news/bs64/refer_orcale/checkpoint-2100"
+refer_model_base="openai-community/gpt2-large"
+refer_model_orcale="ft_llms/openai-community/gpt2-large/ag_news/bs32/refer_orcale/checkpoint-2724"
 refer_model_neighbor="FacebookAI/roberta-base"
 dataset_name="ag_news"
+
+# check if block size is the same as the one used in the target model: check bs
+bs=$(echo $target_model | grep -o "bs[0-9]*" | cut -c 3-)
+if [ $bs -ne $block_size ]; then
+    echo "Block size is not the same as the one used in the target model."
+    exit 1
+fi
+
 
 log_dir="./logs/$model_name"/"$dataset_name"/"bs$block_size/" 
 

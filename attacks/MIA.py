@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from models.finetuned_llms import FinetunedCasualLM
 from .functions import function_map
-from .utils import draw_auc_curve
+from .utils import draw_auc_curve, save_to_csv
 import inspect
 from datasets import Dataset
 
@@ -134,7 +134,8 @@ class MemberInferenceAttack(AttackBase):
         Evaluate the results.
         """
         score_dict = {}
-        # Metric
+        # Model info and Metric
+        score_dict['block_size'] = args.block_size
         score_dict['metric'] = args.metric
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
@@ -158,11 +159,11 @@ class MemberInferenceAttack(AttackBase):
         score_dict['auc'] = auc(fpr, tpr)
         
         # draw the ROC curve
-        save_path = os.path.join(args.result_dir, args.model_name, args.dataset_name,
-                                 args.metric)
+        save_path = os.path.join(args.result_dir, args.model_name, args.dataset_name,)
         draw_auc_curve(fpr, tpr, 
                        title=str(save_path),
-                       save_path=save_path)
+                       save_path=save_path,
+                       metric=args.metric)
         
         # Get TPR@x%FPR
         for rate in [0.001, 0.005, 0.01, 0.05]:
@@ -176,5 +177,7 @@ class MemberInferenceAttack(AttackBase):
             score_dict[f'FPR@{rate*100}%TPR({actual_rate:.5f})'] = fpr_rate
         # score_dict[r'TPR@0.1%FPR'] = tpr[np.where(fpr>=0.001)[0][0]]
         
+        # save the results
+        save_to_csv(score_dict, save_path)
         
         return score_dict
