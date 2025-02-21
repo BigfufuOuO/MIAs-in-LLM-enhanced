@@ -27,7 +27,7 @@ parser.add_argument("--model_path", type=str, default="openai-community/gpt2", h
 parser.add_argument("--dataset_name", type=str, default="wikitext", help="The dataset name.")
 parser.add_argument("--dataset_config_name", type=str, default=None, help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--use_cache", action="store_true", default=False, help="Whether to use cache.")
-parser.add_argument("--model_cache_path", type=str, default="./cache/models", help="The cache path.")
+parser.add_argument("--model_cache_path", type=str, help="The cache path.")
 parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets", help="The dataset cache path.")
 parser.add_argument("--trust_remote_code", action="store_true", default=False)
 

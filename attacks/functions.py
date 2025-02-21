@@ -7,6 +7,19 @@ import zlib
 import torch
 import torch.nn.functional as F
 
+def empty(text: str):
+    """
+    No attack method.
+    
+    Args:
+        target: The target to evaluate.
+        text: The text to evaluate.
+    """
+    # random score in {0, 1}
+    return {
+        "score": float(np.random.randint(0, 2, dtype=float))
+    }
+
 def loss(target: FinetunedCasualLM, text: str):
     """
     Return loss of the given text.
@@ -238,6 +251,7 @@ def SVA_MIA(target: FinetunedCasualLM,
 
 
 function_map = {
+    "empty": empty,
     "loss": loss,
     "ppl": perplexity,
     "refer": Refer,

@@ -6,18 +6,18 @@ echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=32
-target_model="ft_llms/openai-community/gpt2-large/ag_news/bs32/target_base/checkpoint-2270"
-model_name="openai-community/gpt2-large"
+target_model="ft_llms/openai-community/gpt2-xl/ag_news/bs32/target_base/checkpoint-2724"
+model_name="openai-community/gpt2-xl"
 
-refer_model_base="openai-community/gpt2-large"
-refer_model_orcale="ft_llms/openai-community/gpt2-large/ag_news/bs32/refer_orcale/checkpoint-2724"
+refer_model_base="openai-community/gpt2-xl"
+refer_model_orcale="ft_llms/openai-community/gpt2-xl/ag_news/bs32/refer_orcale/checkpoint-3632"
 refer_model_neighbor="FacebookAI/roberta-base"
 dataset_name="ag_news"
 
 # check if block size is the same as the one used in the target model: check bs
 bs=$(echo $target_model | grep -o "bs[0-9]*" | cut -c 3-)
 if [ $bs -ne $block_size ]; then
-    echo "Block size is not the same as the one used in the target model."
+    echo "[ERROR]Block size is not the same as the one used in the target model."
     exit 1
 fi
 
@@ -26,6 +26,19 @@ log_dir="./logs/$model_name"/"$dataset_name"/"bs$block_size/"
 
 mkdir -p $log_dir
 exec > >(tee -i "$log_dir/output.log")
+
+start_time=$(date +%s)
+
+# Empty
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name \
+    --dataset_name $dataset_name \
+    --metric empty \
+    --block_size $block_size \
+    --half --packing \
+    --small_dataset \
+    --use_dataset_cache
 
 # Loss
 accelerate launch run.py \
@@ -130,7 +143,7 @@ accelerate launch run.py \
     --small_dataset \
     --use_dataset_cache
 
-Neighbor
+# Neighbor
 accelerate launch run.py \
     --target_model $target_model \
     --model_name $model_name  \
@@ -163,3 +176,6 @@ accelerate launch run.py \
     --half --packing \
     --small_dataset \
     --use_dataset_cache
+
+end_time=$(date +%s)
+echo ">>>> [TIME]Total time: $(($end_time - $start_time))s"

@@ -63,7 +63,7 @@ class MemberInferenceAttack(AttackBase):
         if self.metric == 'neighbor':
             score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
                                 batched=True,
-                                batch_size=32,
+                                batch_size=64,
                                 desc=f"Evaluating {self.metric}")
         else:
             score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),

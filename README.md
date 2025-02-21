@@ -1,3 +1,7 @@
+# Procedure
+1. Fine tune the target model and reference model.
+2. Excuete the attack methods.
+
 # Methods
 1. Loss
 2. Perplexity

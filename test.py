@@ -1,4 +1,4 @@
+import numpy as np
 
-import datasets
-
-data = datasets.load_dataset(cache_dir='cache/datasets/ag_news/None/train_dataset')
+a = float(np.random.randint(0, 2))
+print(type(a), a)
