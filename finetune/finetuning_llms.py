@@ -4,7 +4,10 @@ import os
 import datasets
 import trl
 from trl import SFTTrainer
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments, AutoConfig
+from transformers import (
+    AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments, AutoConfig,
+    EarlyStoppingCallback
+)
 from accelerate import Accelerator
 
 from datasets import Dataset, load_from_disk
@@ -204,7 +207,7 @@ model = AutoModelForCausalLM.from_pretrained(args.model_path,
                                              trust_remote_code=args.trust_remote_code, 
                                              cache_dir=args.model_cache_path,
                                              torch_dtype=torch_dtype, 
-                                             config=config, 
+                                             config=config,
                                              **kwargs)
 
 # flash attention
@@ -259,6 +262,7 @@ training_args = TrainingArguments(
     warmup_steps=args.warmup_steps,
     gradient_accumulation_steps=args.gradient_accumulation_steps,
     gradient_checkpointing=args.gradient_checkpointing,
+    gradient_checkpointing_kwargs={"use_reentrant": False},
     weight_decay=args.weight_decay,
     adam_epsilon=1e-6,
     report_to="wandb",
@@ -277,7 +281,10 @@ trainer = SFTTrainer(
     eval_dataset=valid_dataset,
     # dataset_text_field="text",
     tokenizer=tokenizer,
-    max_seq_length=1024
+    max_seq_length=1024,
+    callbacks=[
+        EarlyStoppingCallback(early_stopping_patience=3),
+    ],
 )
 
 # train

@@ -47,7 +47,7 @@ class MemberInferenceAttack(AttackBase):
         """
         target = model
         reference = self.ref_model
-        n_neighbor = 5
+        n_neighbor = 25
         k = 0.1
         
         # get locals

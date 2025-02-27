@@ -1,16 +1,16 @@
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=3
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-block_size=32
-target_model="ft_llms/openai-community/gpt2-xl/ag_news/bs32/target_base/checkpoint-2724"
-model_name="openai-community/gpt2-xl"
+block_size=64
+target_model="./ft_llms/Qwen/Qwen2.5-0.5B/ag_news/bs64/target_base/checkpoint-1020"
+model_name="Qwen/Qwen2.5-0.5B"
 
-refer_model_base="openai-community/gpt2-xl"
-refer_model_orcale="ft_llms/openai-community/gpt2-xl/ag_news/bs32/refer_orcale/checkpoint-3632"
+refer_model_base="Qwen/Qwen2.5-0.5B"
+refer_model_orcale="./ft_llms/Qwen/Qwen2.5-0.5B/ag_news/bs64/refer_orcale/checkpoint-1224"
 refer_model_neighbor="FacebookAI/roberta-base"
 dataset_name="ag_news"
 
@@ -37,8 +37,8 @@ accelerate launch run.py \
     --metric empty \
     --block_size $block_size \
     --half --packing \
-    --small_dataset \
-    --use_dataset_cache
+    --small_dataset
+    # not use_dataset_cache here to make sure block size correct
 
 # Loss
 accelerate launch run.py \

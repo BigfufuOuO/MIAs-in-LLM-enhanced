@@ -304,7 +304,7 @@ class FinetunedCasualLM(LLMBase):
 
         return neighborhood
     
-    def generate_neighbors_inbatch(self, texts, p=0.7, k=3, n=5):
+    def generate_neighbors_inbatch(self, texts, p=0.7, k=5, n=25):
         """
         For TEXT, generates a neighborhood of single-token replacements, considering the best K token replacements
         at each position in the sequence and returning the top N neighboring sequences.
@@ -322,6 +322,7 @@ class FinetunedCasualLM(LLMBase):
         tokenized = self._tokenizer(texts, 
                                     return_tensors='pt', 
                                     truncation=True,
+                                    padding='longest',
                                     max_length=self.max_seq_len).input_ids.to(self.model.device)
         batch_size = tokenized.shape[0]
         
@@ -381,7 +382,7 @@ class FinetunedCasualLM(LLMBase):
         for i in range(n):
             neighbor = torch.clone(tokenized)
             neighbor[batch_indices, neigh_position[:, i]] = neigh_tokens[:, i]
-            new_neighbor = np.array(self._tokenizer.batch_decode(neighbor))
+            new_neighbor = np.array(self._tokenizer.batch_decode(neighbor, skip_special_tokens=True))
             neighborhoods[:, i] = new_neighbor
             
         

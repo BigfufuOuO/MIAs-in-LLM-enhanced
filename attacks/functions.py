@@ -17,7 +17,7 @@ def empty(text: str):
     """
     # random score in {0, 1}
     return {
-        "score": float(np.random.randint(0, 2, dtype=float))
+        "score": float(np.random.randint(0, 2))
     }
 
 def loss(target: FinetunedCasualLM, text: str):
@@ -239,7 +239,8 @@ def SVA_MIA(target: FinetunedCasualLM,
             text: str, ):
     """
     SVA-MIA method.
-    https://arxiv.org/pdf/2404.02936
+    https://arxiv.org/pdf/2311.06062
+    https://github.com/tsinghua-fib-lab/ANeurIPS2024_SPV-MIA/tree/main
     
     Args:
         target: The target to evaluate.
