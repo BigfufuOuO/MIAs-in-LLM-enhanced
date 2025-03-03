@@ -6,6 +6,8 @@ import numpy as np
 import zlib
 import torch
 import torch.nn.functional as F
+from .utils import *
+from .sva import SvaMIAGenerator
 
 def empty(text: str):
     """
@@ -236,7 +238,10 @@ def Min_k_plus(target: FinetunedCasualLM,
     }
 
 def SVA_MIA(target: FinetunedCasualLM, 
-            text: str, ):
+            text: list, 
+            mask_model: any = None,
+            mask_tokenizer: any = None,
+            ):
     """
     SVA-MIA method.
     https://arxiv.org/pdf/2311.06062
@@ -247,6 +252,12 @@ def SVA_MIA(target: FinetunedCasualLM,
         text: The text to evaluate.
         k: The proportion of the tokens to consider.
     """
+    # assert reference is not None, 'SVA MIA requires a reference model'
+    target_loss = target.evaluate(text)
+    # ref_loss = reference.evaluate(text)
+    sva_mia = SvaMIAGenerator(mask_model=mask_model,
+                      mask_tokenizer=mask_tokenizer)
+    n_failed, perturbed_texts = sva_mia.gen_perturbed_texts(text,)
     pass
         
 

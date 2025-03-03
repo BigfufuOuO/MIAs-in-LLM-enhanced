@@ -17,6 +17,7 @@ parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets"
 # model definition
 parser.add_argument('--target_model', type=str, default="openai-community/gpt2", required=True, help="The target model to attack.")
 parser.add_argument('--refer_model', type=str, help="The reference model to take reference.")
+parser.add_argument('--mask_model', type=str, help="The mask model to use.")
 parser.add_argument('--model_name', type=str, default=None, help="The NAME to the original target model.")
 parser.add_argument('--data_path', type=str, default="data/echr", help="The path to the data.")
 
@@ -55,6 +56,11 @@ if __name__ == '__main__':
                                     model_path=args.refer_model,)
     else:
         refer_llm = None
+        
+    if args.mask_model:
+        mask_model = args.mask_model
+    else:
+        mask_model = None
 
     # data
     data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
@@ -62,7 +68,8 @@ if __name__ == '__main__':
     print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
     # excute attack
-    attack = MemberInferenceAttack(metric=args.metric, ref_model=refer_llm)
+    attack = MemberInferenceAttack(metric=args.metric, ref_model=refer_llm,
+                                   mask_model=mask_model)
     results = attack.execute(target_llm, 
                             data.train_dataset,
                             data.test_dataset,)

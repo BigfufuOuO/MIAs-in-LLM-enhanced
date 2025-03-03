@@ -14,6 +14,7 @@ from .functions import function_map
 from .utils import draw_auc_curve, save_to_csv
 import inspect
 from datasets import Dataset
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 class MemberInferenceAttack(AttackBase):
     """
@@ -26,13 +27,15 @@ class MemberInferenceAttack(AttackBase):
     """
     def __init__(self, 
                  metric: str = 'ppl', 
-                 ref_model=None, 
+                 ref_model=None,
+                 mask_model=None,
                  n_neighbor=5):
         # self.extraction_prompt = ["Tell me about..."]  # TODO this is just an example to extract data.
         self.metric = metric
         if self.metric not in function_map:
             raise ValueError(f"Metric {self.metric} is not supported. Please check if the function is implemented or if the name is correct.")
         self.ref_model = ref_model
+        self.mask_model = mask_model
         self.n_neighbor = n_neighbor
     
     @torch.no_grad()
@@ -50,6 +53,12 @@ class MemberInferenceAttack(AttackBase):
         n_neighbor = 25
         k = 0.1
         
+        if self.mask_model:
+            mask_model = AutoModelForSeq2SeqLM.from_pretrained(self.mask_model,
+                                                               torch_dtype=torch.bfloat16,
+                                                               device_map="auto")
+            mask_tokenizer = AutoTokenizer.from_pretrained(self.mask_model)
+        
         # get locals
         locals_ = locals()
         # access the function from the function map, according to the metric.
@@ -60,7 +69,7 @@ class MemberInferenceAttack(AttackBase):
             for name in required_args if name in locals_
         }
         
-        if self.metric == 'neighbor':
+        if self.metric == 'neighbor' or self.metric == 'sva_mia':
             score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
                                 batched=True,
                                 batch_size=64,

@@ -12,14 +12,16 @@ model_name="Qwen/Qwen2.5-0.5B"
 refer_model_base="Qwen/Qwen2.5-0.5B"
 refer_model_orcale="./ft_llms/Qwen/Qwen2.5-0.5B/ag_news/bs32/refer_orcale/checkpoint-1320"
 refer_model_neighbor="FacebookAI/roberta-base"
+mask_model="google-t5/t5-base"
 dataset_name="ag_news"
 
 python -m pdb run.py \
     --target_model $target_model \
     --model_name $model_name \
-    --refer_model $refer_model_neighbor \
+    --mask_model $mask_model \
     --dataset_name $dataset_name \
-    --metric neighbor \
+    --metric sva_mia \
     --block_size $block_size \
     --half --packing \
-    --small_dataset
+    --small_dataset \
+    --use_dataset_cache

@@ -5,8 +5,8 @@ export HF_ENDPOINT="http://hf-mirror.com"
 echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-block_size=64
-target_model="./ft_llms/Qwen/Qwen2.5-0.5B/ag_news/bs64/target_base/checkpoint-1020"
+block_size=128
+target_model="./ft_llms/Qwen/Qwen2.5-0.5B/ag_news/bs128/target_base/checkpoint-490"
 model_name="Qwen/Qwen2.5-0.5B"
 
 refer_model_base="Qwen/Qwen2.5-0.5B"
