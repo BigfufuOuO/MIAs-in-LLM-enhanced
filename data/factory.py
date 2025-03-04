@@ -27,16 +27,6 @@ class DataFactory:
             test = test.select(list(range(len(test) // 10)))
             return train, test
         
-        if args.small_dataset:
-            print("Using small dataset.")
-            np.random.seed(42)
-            # select 1/5 of the dataset
-            selected_indices = np.random.choice(len(train), len(train) // 5, replace=False)
-            train = train.select(selected_indices)
-            selected_indices = np.random.choice(len(test), len(test) // 5, replace=False)
-            test = test.select(selected_indices)
-            return train, test
-        
         if args.split_dataset:
             print("Using split dataset.")
             np.random.seed(42)

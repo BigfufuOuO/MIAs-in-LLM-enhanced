@@ -34,6 +34,7 @@ parser.add_argument("--model_cache_path", type=str, help="The cache path.")
 parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets", help="The dataset cache path.")
 parser.add_argument("--trust_remote_code", action="store_true", default=False)
 
+parser.add_argument("--load_from_disk", action="store_true", default=False, help="Whether to load the dataset from disk.")
 parser.add_argument("--output_dir", type=str, default="./output", required=True, help="The output directory.")
 parser.add_argument("--packing", action="store_true", default=False, help="Whether to pack the dataset.")
 parser.add_argument("--split_model", action="store_true", default=False, help="Whether to split the model across all available devices.")
@@ -76,7 +77,6 @@ parser.add_argument("--validation_split_percentage", default=0.2, help="The perc
 
 # debug and split
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
-parser.add_argument("--small_dataset", action="store_true", help="Use small dataset.")
 parser.add_argument("--split_dataset", action="store_true", help="Use split dataset.")
 parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning of the split.")
 parser.add_argument("--split_end", type=float, default=0.2, help="The end of the split.")

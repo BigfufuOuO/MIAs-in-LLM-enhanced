@@ -35,10 +35,13 @@ parser.add_argument("--block_size", type=int, default=128)
 parser.add_argument("--packing", action="store_true")
 parser.add_argument("--preprocessing_num_workers", type=int, default=1, help="The number of workers to use for the preprocessing.")
 parser.add_argument("--use_dataset_cache", action="store_true", default=False, help="Whether to use dataset cache.")
+parser.add_argument("--load_from_disk", action="store_true", default=False, help="Whether to load the dataset from disk.")
 
 # debug
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
-parser.add_argument("--small_dataset", action="store_true", help="Use small dataset.")
+parser.add_argument("--split_dataset", action="store_true", help="Use small dataset.")
+parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning of the split.")
+parser.add_argument("--split_end", type=float, default=0.2, help="The end of the split.")
 
 # result
 parser.add_argument("--result_dir", type=str, default="./results", help="The output directory to save the results.")

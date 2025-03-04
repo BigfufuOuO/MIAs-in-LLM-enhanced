@@ -158,7 +158,10 @@ class FinetunedCasualLM(LLMBase):
             generated_text = self._tokenizer.decode(output.sequences[0], skip_special_tokens=True)
         return generated_text
 
-    def evaluate(self, text, tokenized=False):
+    def evaluate(self, 
+                 text, 
+                 tokenized=False,
+                 padding: bool = False):
         """
         Evaluate an open-source model with a given text prompt.
 
@@ -175,14 +178,23 @@ class FinetunedCasualLM(LLMBase):
             # Encode the text prompt and generate a response
             input_ids = self._tokenizer(text, 
                                         return_tensors='pt', 
-                                        truncation=True, 
+                                        truncation=True,
+                                        padding=padding,
                                         max_length=self.max_seq_len).input_ids
+            
+        if padding:
+            # attention if not padding token
+            attention_mask = torch.where(input_ids == self._tokenizer.pad_token_id, 0, 1)
+        else:
+            attention_mask = torch.ones_like(input_ids)
 
         # Implement the code to query the open-source model
         input_ids = input_ids.to(self.model.device)
+        attention_mask = attention_mask.to(self.model.device)
         with torch.no_grad():
             output = self.model(
                 input_ids=input_ids,
+                attention_mask=attention_mask,
                 labels=input_ids.clone(),
             )
         return output.loss.item()
@@ -197,24 +209,7 @@ class FinetunedCasualLM(LLMBase):
         Returns:
             loss: The model's average loss.
         """
-        if tokenized:
-            input_ids = texts
-        else:
-            # Encode the text prompt and generate a response
-            input_ids = self._tokenizer(texts, 
-                                        return_tensors='pt', 
-                                        truncation=True, 
-                                        padding=True,
-                                        max_length=self.max_seq_len).input_ids
-
-        # Implement the code to query the open-source model
-        input_ids = input_ids.to(self.model.device)
-        with torch.no_grad():
-            output = self.model(
-                input_ids=input_ids,
-                labels=input_ids.clone(),
-            )
-        return output.loss.item()
+        raise NotImplementedError("Batch evaluation is not implemented.")
 
     def evaluate_ppl(self, text, tokenized=False):
         """

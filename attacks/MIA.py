@@ -14,7 +14,7 @@ from .functions import function_map
 from .utils import draw_auc_curve, save_to_csv
 import inspect
 from datasets import Dataset
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, BitsAndBytesConfig
 
 class MemberInferenceAttack(AttackBase):
     """
@@ -54,6 +54,12 @@ class MemberInferenceAttack(AttackBase):
         k = 0.1
         
         if self.mask_model:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
             mask_model = AutoModelForSeq2SeqLM.from_pretrained(self.mask_model,
                                                                torch_dtype=torch.bfloat16,
                                                                device_map="auto")
@@ -69,7 +75,7 @@ class MemberInferenceAttack(AttackBase):
             for name in required_args if name in locals_
         }
         
-        if self.metric == 'neighbor' or self.metric == 'sva_mia':
+        if self.metric == 'neighbor' or self.metric == 'spv_mia':
             score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
                                 batched=True,
                                 batch_size=64,

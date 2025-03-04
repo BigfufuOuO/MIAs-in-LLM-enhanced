@@ -1,7 +1,7 @@
 import numpy as np
 import re
 
-class SvaMIAGenerator:
+class SpvMIAGenerator:
     def __init__(self, 
                  mask_model: any = None, 
                  mask_tokenizer: any = None,):
@@ -11,7 +11,8 @@ class SvaMIAGenerator:
         
     def mask_texts(self,
                    texts: list,
-                   ratio: float = 0.2):
+                   ratio: float = 0.1,
+                   n_perturbed: int = 10):
         """
         Mask only one text.
         
@@ -30,9 +31,12 @@ class SvaMIAGenerator:
                 The number of masks.
         """
         np.random.seed(None)
-        masked_texts = np.empty(len(texts), dtype=object)
         masked_indices = np.empty(len(texts), dtype=object)
-        splitted_masked_texts = np.empty(len(texts), dtype=object)
+        splitted_masked = np.empty(len(texts), dtype=object)
+        
+        # expand text
+        texts = np.array(texts)
+        texts = np.repeat(texts, n_perturbed, axis=-1)
         for i, text in enumerate(texts):
             words = text.split(' ')
             num_to_mask = int(len(words) * ratio)
@@ -42,14 +46,13 @@ class SvaMIAGenerator:
             for j in mask_idx:
                 words[j] = f'<extra_id_{extra_id_index}>'
                 extra_id_index += 1
-            masked_text = ' '.join(words)
-            masked_texts[i] = masked_text
+        
             masked_indices[i] = mask_idx
-            splitted_masked_texts[i] = np.array(words)
+            splitted_masked[i] = np.array(words)
             
         masked_texts = masked_texts.tolist()
         num_masks = [len(x) for x in masked_indices]
-        return masked_indices, masked_texts, splitted_masked_texts, num_masks
+        return masked_indices, splitted_masked, num_masks
 
     def extract_fills(
                     self,
@@ -62,7 +65,9 @@ class SvaMIAGenerator:
             inputs: The tokenized inputs to the model.
         """
         outputs = self.model.generate(**inputs, do_sample=True,
-                                        top_p=0.8,)
+                                        num_beams=3,
+                                        top_p=0.8,
+                                        )
         outputs = self.tokenizer.batch_decode(outputs, skip_special_tokens=False)
         
         # extract fills
@@ -101,7 +106,9 @@ class SvaMIAGenerator:
                     n_failed += 1
                 splitted_masked_texts[i][mask_idx] = extracted_fills[i][:num_masks[i]]
                 
-            perturbed_texts[:, n] = splitted_masked_texts
+            perturbed_texts[:, n] = [' '.join(x) for x in splitted_masked_texts]
+            
+        perturbed_texts = perturbed_texts.tolist()
         
         return n_failed, perturbed_texts
     
@@ -128,8 +135,4 @@ class SvaMIAGenerator:
             if len(extracted_fills[0]) >= num_masks[0]:
                 return masked_indices[0], extracted_fills
 
-    def gen_perturbed_texts(self,
-                            texts: list,):
-        outputs = self.tokenize_masks(texts, )
-    
     

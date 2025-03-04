@@ -7,7 +7,7 @@ import zlib
 import torch
 import torch.nn.functional as F
 from .utils import *
-from .sva import SvaMIAGenerator
+from .spv import SpvMIAGenerator
 
 def empty(text: str):
     """
@@ -237,7 +237,8 @@ def Min_k_plus(target: FinetunedCasualLM,
         "score": - np.mean(topk).item()
     }
 
-def SVA_MIA(target: FinetunedCasualLM, 
+def SPV_MIA(target: FinetunedCasualLM, 
+            reference: FinetunedCasualLM,
             text: list, 
             mask_model: any = None,
             mask_tokenizer: any = None,
@@ -253,12 +254,22 @@ def SVA_MIA(target: FinetunedCasualLM,
         k: The proportion of the tokens to consider.
     """
     # assert reference is not None, 'SVA MIA requires a reference model'
-    target_loss = target.evaluate(text)
-    # ref_loss = reference.evaluate(text)
-    sva_mia = SvaMIAGenerator(mask_model=mask_model,
+    
+    spv_mia = SpvMIAGenerator(mask_model=mask_model,
                       mask_tokenizer=mask_tokenizer)
-    n_failed, perturbed_texts = sva_mia.gen_perturbed_texts(text,)
-    pass
+    n_failed, perturbed_texts = spv_mia.tokenize_masks(text,)
+    scores = []
+    for batch_text, batch_perturbed_text in zip(text, perturbed_texts):
+        original_target_loss = target.evaluate(batch_text)
+        original_ref_loss = reference.evaluate(batch_text)
+        perturbed_target_loss = target.evaluate(batch_perturbed_text, padding=True)
+        perturbed_ref_loss = reference.evaluate(batch_perturbed_text, padding=True)
+        score = (original_target_loss - original_ref_loss) - (perturbed_target_loss - perturbed_ref_loss)
+        scores.append(score)
+    
+    return {
+        "score": scores
+    }
         
 
 
@@ -278,5 +289,5 @@ function_map = {
     "neighbor": Neighbour_inbatch,
     "min_k": Min_k,
     "min_k++": Min_k_plus,
-    "sva_mia": SVA_MIA
+    "spv_mia": SPV_MIA
 }

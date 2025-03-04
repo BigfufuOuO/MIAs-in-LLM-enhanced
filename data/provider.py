@@ -99,17 +99,23 @@ def dataset_prepare(args,
                         `train_dataset[0] == {'text': 'This is the first text.'}`
         valid_dataset: The validation dataset.
     """
-    train_dataset = datasets.load_dataset(
-        args.dataset_name,
-        args.dataset_config_name,
-        split=f"train[:{int((1-args.validation_split_percentage)*100)}%]"
-    )
-    
-    valid_dataset = datasets.load_dataset(
-        args.dataset_name,
-        args.dataset_config_name,
-        split=f"train[{int((1-args.validation_split_percentage)*100)}%:]",
-    )
+    if args.load_from_disk:
+        all_dataset = datasets.load_from_disk(args.dataset_name)
+        split_dataset = all_dataset.train_test_split(train_size=1-args.validation_split_percentage)
+        train_dataset = split_dataset["train"]
+        valid_dataset = split_dataset["test"]
+    else:
+        train_dataset = datasets.load_dataset(
+            args.dataset_name,
+            args.dataset_config_name,
+            split=f"train[:{int((1-args.validation_split_percentage)*100)}%]"
+        )
+        
+        valid_dataset = datasets.load_dataset(
+            args.dataset_name,
+            args.dataset_config_name,
+            split=f"train[{int((1-args.validation_split_percentage)*100)}%:]",
+        )
     
     column = train_dataset.column_names
     possible_text_columns = ["text", "document", "content"]
