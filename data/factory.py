@@ -1,8 +1,9 @@
 from .echr import EchrDataset
 from .enron import EnronDataset
 from .provider import dataset_prepare
-import datasets
+from datasets import Dataset
 import numpy as np
+import os
 
 class DataFactory:
     def __init__(self, data_path, args, tokenizer):
@@ -23,8 +24,8 @@ class DataFactory:
             train, test = dataset_prepare(args=args, tokenizer=tokenizer)
             
         if args.debug:
-            train = train.select(list(range(len(train) // 10)))
-            test = test.select(list(range(len(test) // 10)))
+            train = train.select(list(range(len(train) // 200)))
+            test = test.select(list(range(len(test) // 200)))
             return train, test
         
         if args.split_dataset:

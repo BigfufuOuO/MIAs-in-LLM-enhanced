@@ -24,5 +24,5 @@ for block_size in 32 64 128; do
         --gradient_checkpointing \
         --use_int4 \
         --split_begin 0.2 --split_end 0.4 \
-        -e 10 -bs $batch_size -lr 5e-3 --gradient_accumulation_steps 1
+        -e 6 -bs $batch_size -lr 5e-3 --gradient_accumulation_steps 1
 done

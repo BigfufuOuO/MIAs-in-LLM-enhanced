@@ -143,7 +143,8 @@ def Neighbour(target: FinetunedCasualLM,
 def Neighbour_inbatch(target: FinetunedCasualLM,
                       reference: FinetunedCasualLM,
                       n_neighbor: int = 5,
-                      text: list = None):
+                      text: list = None,
+                      neighbors: list = None):
     """
     NEIGHBOR method in batch.
     https://arxiv.org/abs/2305.18462
@@ -155,7 +156,10 @@ def Neighbour_inbatch(target: FinetunedCasualLM,
         n_neighbor: The number of neighbors to generate.
     """
     assert reference is not None, 'Neighborhood MIA requires a reference target'
-    batch_neighbors = reference.generate_neighbors_inbatch(text, n=n_neighbor)
+    if neighbors:
+        batch_neighbors = neighbors
+    else:
+        batch_neighbors = reference.generate_neighbors_inbatch(text, n=n_neighbor)
     
     scores = []
     for batch_neighbor, batch_text in zip(batch_neighbors, text):
@@ -164,9 +168,15 @@ def Neighbour_inbatch(target: FinetunedCasualLM,
         batch_score = loss_text - loss_neigh
         scores.append(batch_score)
     
-    return {
-        "score": scores
-    }
+    if neighbors:
+        return {
+            "score": scores
+        }
+    else:
+        return {
+            "score": scores,
+            "neighbor_texts": batch_neighbors
+        }
 
 def Min_k(target: FinetunedCasualLM, 
           text: str, 
@@ -202,7 +212,7 @@ def Min_k(target: FinetunedCasualLM,
 
 def Min_k_plus(target: FinetunedCasualLM, 
                text: str, 
-               k: float = 0.1):
+               k: float = 0.2):
     """
     Min K++ method.
     https://arxiv.org/pdf/2404.02936
@@ -242,6 +252,8 @@ def SPV_MIA(target: FinetunedCasualLM,
             text: list, 
             mask_model: any = None,
             mask_tokenizer: any = None,
+            n_perturbed: int = 5,
+            neighbors: list = None
             ):
     """
     SVA-MIA method.
@@ -257,7 +269,11 @@ def SPV_MIA(target: FinetunedCasualLM,
     
     spv_mia = SpvMIAGenerator(mask_model=mask_model,
                       mask_tokenizer=mask_tokenizer)
-    n_failed, perturbed_texts = spv_mia.tokenize_masks(text,)
+    if neighbors:
+        perturbed_texts = neighbors
+    else:
+        n_failed, perturbed_texts = spv_mia.tokenize_masks(text,
+                                                        n_perturbed=n_perturbed)
     scores = []
     for batch_text, batch_perturbed_text in zip(text, perturbed_texts):
         original_target_loss = target.evaluate(batch_text)
@@ -267,9 +283,15 @@ def SPV_MIA(target: FinetunedCasualLM,
         score = (original_target_loss - original_ref_loss) - (perturbed_target_loss - perturbed_ref_loss)
         scores.append(score)
     
-    return {
-        "score": scores
-    }
+    if neighbors:
+        return {
+            "score": scores
+        }
+    else:
+        return {
+            "score": scores,
+            "neighbor_texts": perturbed_texts,
+        }
         
 
 

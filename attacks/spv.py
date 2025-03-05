@@ -10,9 +10,9 @@ class SpvMIAGenerator:
         
         
     def mask_texts(self,
+                   n_perturbed: int,
                    texts: list,
-                   ratio: float = 0.1,
-                   n_perturbed: int = 10):
+                   ratio: float = 0.1,):
         """
         Mask only one text.
         
@@ -21,38 +21,62 @@ class SpvMIAGenerator:
             ratio: The ratio of the masked tokens.
         
         Returns:
-            masked_indices (np.array): 
+            masked_indices (list, shape: (n_batches * n_perturbed)): 
                 The indices of the masked tokens.
-            masked_texts (list):
-                The masked texts.
-            splitted_masked_texts (np.array): 
+            flatten_words (list, shape: (n_batches * n_perturbed)): 
                 The splitted masked texts.
-            num_masks (np.array): 
+            flatten_num_to_mask (np.array, shape: (n_batches * n_perturbed)): 
                 The number of masks.
         """
         np.random.seed(None)
-        masked_indices = np.empty(len(texts), dtype=object)
-        splitted_masked = np.empty(len(texts), dtype=object)
         
         # expand text
         texts = np.array(texts)
+        texts = texts[:, np.newaxis]
         texts = np.repeat(texts, n_perturbed, axis=-1)
-        for i, text in enumerate(texts):
-            words = text.split(' ')
-            num_to_mask = int(len(words) * ratio)
-            mask_idx = np.random.choice(len(words), num_to_mask, replace=False)
+        words = np.char.split(texts, sep=' ')
+        vectorized_len = np.vectorize(len)
+        word_counts = vectorized_len(words)
+        num_to_mask = np.ceil(word_counts * ratio).astype(int)
+        flatten_word_counts = word_counts.flatten()
+        flatten_num_to_mask = num_to_mask.flatten()
+        flatten_words = words.flatten()
+        masked_indices = []
+        for i, (word_count, num_to_mask) in enumerate(zip(flatten_word_counts, flatten_num_to_mask)):
+            if word_count < 2:
+                # add random space to avoid error
+                start = np.random.randint(0, len(flatten_words[i][0]) - 12)
+                flatten_words[i][0] = flatten_words[i][0][:start] + ' ' + flatten_words[i][0][start:start+10] + ' ' + flatten_words[i][0][start+10:]
+                flatten_words[i] = flatten_words[i][0].split(' ')
+                word_count = len(flatten_words[i])
+                
+            mask_idx = np.random.choice(word_count, num_to_mask, replace=False)
             mask_idx = np.sort(mask_idx)
             extra_id_index = 0
             for j in mask_idx:
-                words[j] = f'<extra_id_{extra_id_index}>'
+                flatten_words[i][j] = f'<extra_id_{extra_id_index}>'
                 extra_id_index += 1
-        
-            masked_indices[i] = mask_idx
-            splitted_masked[i] = np.array(words)
+            masked_indices.append(mask_idx.tolist())
             
-        masked_texts = masked_texts.tolist()
-        num_masks = [len(x) for x in masked_indices]
-        return masked_indices, splitted_masked, num_masks
+        flatten_words = flatten_words.tolist()
+        
+        return masked_indices, flatten_words, flatten_num_to_mask
+    
+    def mask_one_text(self,
+                      text: str,
+                      ratio: float = 0.1):
+        """
+        Mask only one text.
+        """
+        words = text.split(' ')
+        num_to_mask = int(len(words) * ratio) + 1
+        mask_idx = np.random.choice(len(words), num_to_mask, replace=False)
+        mask_idx = np.sort(mask_idx)
+        extra_id_index = 0
+        for j in mask_idx:
+            words[j] = f'<extra_id_{extra_id_index}>'
+            extra_id_index += 1
+        return mask_idx, words, num_to_mask
 
     def extract_fills(
                     self,
@@ -87,29 +111,32 @@ class SpvMIAGenerator:
             perturbed_texts (np.array): The perturbed texts
             n_failed (int): The number of failed attempts.
         """
-        masked_indices, masked_texts, splitted_masked_texts, num_masks = self.mask_texts(texts)
+        masked_indices, flatten_words, flatten_num_to_mask = self.mask_texts(texts=texts, 
+                                                                             n_perturbed=n_perturbed)
+        masked_texts = [' '.join(x) for x in flatten_words]
         inputs = self.tokenizer(masked_texts, 
                                 return_tensors='pt', 
                                 padding=True,
                                 truncation=True).to(self.model.device)
 
-        perturbed_texts = np.empty((len(texts), n_perturbed), dtype=object)
         n_failed = 0
-        for n in range(n_perturbed):
-            extracted_fills = self.extract_fills(inputs)
-            
-            # replace each mask token with the corresponding fill
-            for i, mask_idx in enumerate(masked_indices):
-                if len(extracted_fills[i]) < num_masks[i]:
-                    mask_idx, extracted_fill_temp = self.try_again(texts[i])
-                    extracted_fills[i] = extracted_fill_temp[0]
-                    n_failed += 1
-                splitted_masked_texts[i][mask_idx] = extracted_fills[i][:num_masks[i]]
-                
-            perturbed_texts[:, n] = [' '.join(x) for x in splitted_masked_texts]
+        extracted_fills = self.extract_fills(inputs)
+        
+        splitted_masked_texts = np.empty(len(texts) * n_perturbed, dtype=object)
+        # replace each mask token with the corresponding fill
+        for i, mask_idx in enumerate(masked_indices):        
+            splitted_masked_texts[i] = np.array(flatten_words[i])
+            if len(extracted_fills[i]) < flatten_num_to_mask[i]:
+                n_failed += 1
+                n_mask = len(extracted_fills[i])
+                splitted_masked_texts[i][mask_idx[:n_mask]] = extracted_fills[i]
+            else:
+                splitted_masked_texts[i][mask_idx] = extracted_fills[i][:flatten_num_to_mask[i]]
+        
+        perturbed_texts = np.array([' '.join(x) for x in splitted_masked_texts])
+        perturbed_texts = perturbed_texts.reshape(len(texts), n_perturbed)
             
         perturbed_texts = perturbed_texts.tolist()
-        
         return n_failed, perturbed_texts
     
     def try_again(self,
@@ -125,14 +152,14 @@ class SpvMIAGenerator:
             extracted_fills (list): The extracted fills of the specific text.
         """
         while True:
-            texts = [text]
-            masked_indices, masked_texts, splitted_masked_texts, num_masks = self.mask_texts(texts)
+            masked_indices, words, num_masks = self.mask_one_text(text)
+            masked_texts = ' '.join(words)
             inputs = self.tokenizer(masked_texts, 
                                     return_tensors='pt', 
                                     padding=True,
                                     truncation=True).to(self.model.device)
             extracted_fills = self.extract_fills(inputs)
-            if len(extracted_fills[0]) >= num_masks[0]:
-                return masked_indices[0], extracted_fills
+            if len(extracted_fills[0]) >= num_masks:
+                return masked_indices, words, extracted_fills, num_masks
 
     

@@ -16,6 +16,8 @@ import inspect
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, BitsAndBytesConfig
 
+from data.factory import DataFactory
+
 class MemberInferenceAttack(AttackBase):
     """
     Membership Inference Attack (MIA).
@@ -29,7 +31,8 @@ class MemberInferenceAttack(AttackBase):
                  metric: str = 'ppl', 
                  ref_model=None,
                  mask_model=None,
-                 n_neighbor=5):
+                 n_neighbor=25,
+                 n_perturbed=10):
         # self.extraction_prompt = ["Tell me about..."]  # TODO this is just an example to extract data.
         self.metric = metric
         if self.metric not in function_map:
@@ -37,21 +40,27 @@ class MemberInferenceAttack(AttackBase):
         self.ref_model = ref_model
         self.mask_model = mask_model
         self.n_neighbor = n_neighbor
+        self.n_perturbed = n_perturbed
     
     @torch.no_grad()
-    def get_score(self, model: FinetunedCasualLM, dataset: Dataset):
+    def get_score(self, 
+                  model: FinetunedCasualLM, 
+                  dataset: Dataset, 
+                  ):
         """
         Return score. Smaller value means membership.
         Function maps the method to the corresponding evaluation function.
         
         Args:
             model: The model to evaluate.
+            dataset (Dataset): The dataset to evaluate.
         
         """
         target = model
         reference = self.ref_model
-        n_neighbor = 25
-        k = 0.1
+        n_neighbor = self.n_neighbor
+        n_perturbed = self.n_perturbed
+        k = 0.1 # min_k
         
         if self.mask_model:
             bnb_config = BitsAndBytesConfig(
@@ -61,9 +70,11 @@ class MemberInferenceAttack(AttackBase):
                 bnb_4bit_use_double_quant=True,
             )
             mask_model = AutoModelForSeq2SeqLM.from_pretrained(self.mask_model,
+                                                               quantization_config=bnb_config,
                                                                torch_dtype=torch.bfloat16,
                                                                device_map="auto")
             mask_tokenizer = AutoTokenizer.from_pretrained(self.mask_model)
+            
         
         # get locals
         locals_ = locals()
@@ -76,20 +87,29 @@ class MemberInferenceAttack(AttackBase):
         }
         
         if self.metric == 'neighbor' or self.metric == 'spv_mia':
-            score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
-                                batched=True,
-                                batch_size=64,
-                                desc=f"Evaluating {self.metric}")
+            if 'neighbor_texts' not in dataset.column_names:
+                score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+                                    batched=True,
+                                    batch_size=64,
+                                    desc=f"Evaluating {self.metric}")
+            else:
+                score = dataset.map(lambda example: function_map[self.metric](text=example['text'],
+                                                                                neighbors=example['neighbor_texts'],
+                                                                                **extracted_args),
+                                        batched=True,
+                                        batch_size=64,
+                                        desc=f"Evaluating {self.metric}")
         else:
             score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
                                 batched=False,
                                 desc=f"Evaluating {self.metric}")
         return score
     
-    def execute(self, 
+    def execute(self,
                 target: FinetunedCasualLM, 
                 train_set, 
                 test_set, 
+                args,
                 cache_file=None, 
                 resume=False):
         """
@@ -118,10 +138,17 @@ class MemberInferenceAttack(AttackBase):
                 print(f"Resume from {resume_i+1}/{len(test_set)}")
         else:
             resume_i = -1
+        
+        if args.use_neighbor_cache:
+            if self.metric == 'neighbor' or self.metric == 'spv_mia':
+                train_set, test_set = self.load_neighbor(args, train_set, test_set)
+            else:
+                raise ValueError(f"Metric {self.metric} does not support neighbor dataset cache.")
             
         # train set
         print("Evaluating train set:")
-        results['score'] = self.get_score(target, train_set)['score']
+        train_result_dict = self.get_score(target, train_set)
+        results['score'] = train_result_dict['score']
         results['membership'] = [1] * len(train_set)
         print(f"Train avg score: {np.mean(np.array(results['score']))}")
         
@@ -135,13 +162,19 @@ class MemberInferenceAttack(AttackBase):
         
         # test set
         print("Evaluating test set:")
-        test_scores = self.get_score(target, test_set)['score']
+        test_result_dict = self.get_score(target, test_set)
+        test_scores = test_result_dict['score']
         results['score'] += test_scores
         results['membership'] += [0] * len(test_set)
         print(f"Test avg score: {np.mean(np.array(test_scores))}")
         # save the results
         if cache_file:
             torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
+            
+        if 'neighbor_texts' in train_result_dict.column_names and 'neighbor_texts' in test_result_dict.column_names:
+            self.save_neighbor(args, 
+                               train_result_dict['neighbor_texts'], 
+                               test_result_dict['neighbor_texts'])
         return results
 
     def evaluate(self, args, results):
@@ -196,3 +229,47 @@ class MemberInferenceAttack(AttackBase):
         save_to_csv(score_dict, save_path)
         
         return score_dict
+    
+    def save_neighbor(self, 
+                      args, 
+                      train_neighbor: list, 
+                      test_neighbor: list):
+        """
+        If neighbour method (Neighbor, SPV_MIA) is used, save the neighbour for later use.
+        """
+        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{args.metric}'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        train_save_path = os.path.join(save_path, 'train_neighbor')
+        train_neighbor = {'text': train_neighbor}
+        train_neighbor = Dataset.from_dict(train_neighbor)
+        train_neighbor.info.description = f"Neighbor data for {args.dataset_name} train set. \
+            Metric: {args.metric}, Block Size: {args.block_size}\
+            n_perterbed: {self.n_neighbor}, n_neighbor: {self.n_perturbed}, mask_ratio: {args.mask_ratio}"
+        train_neighbor.save_to_disk(train_save_path)
+        
+        test_save_path = os.path.join(save_path, 'test_neighbor')
+        test_neighbor = {'text': test_neighbor}
+        test_neighbor = Dataset.from_dict(test_neighbor)
+        test_neighbor.save_to_disk(test_save_path)
+        
+    def load_neighbor(self,
+                      args,
+                      train_dataset,
+                      test_dataset):
+        """
+        Load the neighbor data.
+        """
+        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{args.metric}'
+        train_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'train_neighbor'))
+        test_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'test_neighbor'))
+        
+        train_dataset = Dataset.from_dict({
+            'text': train_dataset['text'],
+            'neighbor_texts': train_neighbor['text']
+        })
+        test_dataset = Dataset.from_dict({
+            'text': test_dataset['text'],
+            'neighbor_texts': test_neighbor['text']
+        })
+        return train_dataset, test_dataset

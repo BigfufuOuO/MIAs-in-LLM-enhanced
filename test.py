@@ -1,4 +1,5 @@
 import numpy as np
 
-a = float(np.random.randint(0, 2))
-print(type(a), a)
+a = 'orld.com/spotlights/sbc/main.html?lpid0103035400730000idlp"&gt'
+splitted = a.split(' ')
+print(splitted)

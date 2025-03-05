@@ -29,7 +29,7 @@ parser.add_argument("--save_path", type=str, required=True, help="The path to sa
 parser.add_argument("--packing", action="store_true", default=True)
 parser.add_argument("--block_size", type=int, default=128)
 parser.add_argument("--preprocessing_num_workers", type=int, default=1)
-parser.add_argument("--validation_split_percentage", default=0.1,
+parser.add_argument("--validation_split_percentage", default=0.2,
                     help="The percentage of the train set used as validation set in case there's no validation split")
 
 # debug

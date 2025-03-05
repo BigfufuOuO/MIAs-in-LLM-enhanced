@@ -154,10 +154,7 @@ if tokenizer.pad_token_id is None:
 if args.use_int4:
     logger.info("Using int4 quantization")
     bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
-        bnb_4bit_use_double_quant=True,
+        load_in_8bit=True,
     )
     optimizer = "adamw_bnb_8bit"
 elif args.use_int8:
@@ -237,7 +234,9 @@ with accelerator.main_process_first():
     data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=tokenizer)
     train_dataset, valid_dataset = data.train_dataset, data.test_dataset
     train_length, valid_length = data.get_string_length()
+    train_preview, valid_preview = data.get_preview()
     logger.info(f">>> Avg length of the words in train dataset: {train_length}, valid dataset: {valid_length}")
+    logger.info(f">>> Preview of the train dataset: {train_preview}, valid dataset: {valid_preview}")
 
 logger.info(f"Length of Train dataset: {len(train_dataset)}, Valid dataset: {len(valid_dataset)}")
     

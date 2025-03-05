@@ -7,7 +7,7 @@ model_name="openai-community/gpt2"
 dataset="data/refer_data/openai-community/gpt2/ag_news"
 model_type="self_prompt"
 
-for block_size in 32 64 128; do
+for block_size in 64 128; do
     output_dir="./ft_llms/"$model_name"/"$dataset"/"bs$block_size"/"$model_type"/"
     if [ $block_size -ge 64 ]; then
         batch_size=16
