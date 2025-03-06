@@ -1,6 +1,7 @@
 import os
 import torch
 from tqdm import tqdm
+import json
 from torch.utils.data import DataLoader
 import sys
 here = os.path.dirname(__file__)
@@ -18,16 +19,18 @@ accelerator = Accelerator()
 # ======================== Arguments ======================== #
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", type=str, default="openai-community/gpt2")
+parser.add_argument("--block_size", type=int, default=32)
+
 parser.add_argument("--target_model", type=str)
 parser.add_argument("--dataset_name", type=str, default="wikitext-2-raw-v1")
 parser.add_argument("--dataset_config_name", type=str, default=None,
                     help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--cache_path", type=str)
 parser.add_argument("--dataset_cache_path", type=str, default="./cache/datasets", help="The dataset cache path.")
-parser.add_argument("--use_dataset_cache", action="store_true", default=True)
+parser.add_argument("--use_dataset_cache", action="store_true", default=False)
 parser.add_argument("--save_path", type=str, required=True, help="The path to save the generated dataset.")
-parser.add_argument("--packing", action="store_true", default=True)
-parser.add_argument("--block_size", type=int, default=128)
+parser.add_argument("--load_from_disk", action="store_true", default=False, help="Load dataset from disk.")
+parser.add_argument("--packing", action="store_true", default=False)
 parser.add_argument("--preprocessing_num_workers", type=int, default=1)
 parser.add_argument("--validation_split_percentage", default=0.2,
                     help="The percentage of the train set used as validation set in case there's no validation split")
@@ -44,7 +47,33 @@ args = parser.parse_args()
 config = AutoConfig.from_pretrained(args.model_name)
 bnb_config = None
 torch_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-model = AutoModelForCausalLM.from_pretrained(args.target_model, 
+if args.target_model:
+    model_path = args.target_model
+else:
+    model_name = args.model_name
+    block_size = args.block_size
+    dataset_name = args.dataset_name
+    model_path = f"./ft_llms/{model_name}/{dataset_name}/bs{block_size}/target_base"
+    # find dirs
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model path {model_path} does not exist.")
+    else:
+        dirs = os.listdir(model_path)
+        # open the last one
+        dirs = sorted(dirs, key=lambda x: int(x.split("-")[-1]))
+        state_path = os.path.join(model_path, dirs[-1])
+        # state_path = os.path.join(state_path, "trainer_state.json")
+        # if not os.path.exists(state_path):
+        #     raise FileNotFoundError(f"State path {state_path} does not exist.")
+        # else:
+        #     with open(state_path, "r") as f:
+        #         state = json.load(f)
+        #     model_path = state["best_model_checkpoint"]
+        model_path = state_path
+            
+print(f"Loading model from {model_path}")
+        
+model = AutoModelForCausalLM.from_pretrained(model_path, 
                                              quantization_config=bnb_config,
                                              torch_dtype=torch_dtype,
                                              config=config,
@@ -69,8 +98,12 @@ data = DataFactory(data_path=args.dataset_name,
                    args=args,
                    tokenizer=tokenizer)
 train_dataset, valid_dataset = data.train_dataset, data.test_dataset
-prompt_dataset = Dataset.from_dict(train_dataset[:int(len(train_dataset) * 0.5)])
+train_preview, valid_preview = data.get_preview()
+print(f"Train dataset preview: {train_preview}")
+print(f"Valid dataset preview: {valid_preview}")
+prompt_dataset = Dataset.from_dict(train_dataset[:int(len(train_dataset) * 0.25)])
 prompt_dataloader = DataLoader(prompt_dataset, batch_size=1)
+
 
 # ======================== Generate ========================
 if not os.path.exists(args.save_path):

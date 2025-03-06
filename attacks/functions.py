@@ -163,8 +163,8 @@ def Neighbour_inbatch(target: FinetunedCasualLM,
     
     scores = []
     for batch_neighbor, batch_text in zip(batch_neighbors, text):
-        loss_neigh = target.evaluate_batch(batch_neighbor)
         loss_text = target.evaluate(batch_text)
+        loss_neigh = target.evaluate(batch_neighbor, padding=True)
         batch_score = loss_text - loss_neigh
         scores.append(batch_score)
     

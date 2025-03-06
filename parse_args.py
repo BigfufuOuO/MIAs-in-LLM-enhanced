@@ -20,7 +20,7 @@ def get_args():
     parser.add_argument('--data_path', type=str, default="data/echr", help="The path to the data.")
 
     # attack parameter
-    parser.add_argument('--metric', type=str, default="ppl", help="The metric to use for the attack.")
+    parser.add_argument('--metric', type=str, nargs="+", required=True, help="The metric to use for the attack.")
     parser.add_argument('--n_neighbor', type=int, default=25, help="The number of neighbors to consider.")
     parser.add_argument("--n_perturbed", type=int, default=10, help="The number of support vectors to consider.")
     parser.add_argument("--mask_ratio", type=float, default=0.2, help="The ratio of the mask.")

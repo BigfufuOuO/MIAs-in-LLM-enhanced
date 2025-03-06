@@ -1,5 +1,7 @@
-import numpy as np
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--foo', type=str, nargs="+", help='foo help')
 
-a = 'orld.com/spotlights/sbc/main.html?lpid0103035400730000idlp"&gt'
-splitted = a.split(' ')
-print(splitted)
+args = parser.parse_args()
+
+print(args.foo)

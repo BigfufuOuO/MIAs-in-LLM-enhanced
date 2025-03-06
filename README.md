@@ -17,3 +17,6 @@
 9. Min-k
 10. Min-k ++.
 11. SVA_MIA.(NOT IMPLEMENTED)
+
+# Obeservation
+1. Use overfitting model as target model, the attack success rate is higher.

@@ -184,7 +184,7 @@ class MemberInferenceAttack(AttackBase):
         score_dict = {}
         # Model info and Metric
         score_dict['block_size'] = args.block_size
-        score_dict['metric'] = args.metric
+        score_dict['metric'] = self.metric
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
         # score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
@@ -237,14 +237,14 @@ class MemberInferenceAttack(AttackBase):
         """
         If neighbour method (Neighbor, SPV_MIA) is used, save the neighbour for later use.
         """
-        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{args.metric}'
+        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{self.metric}'
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         train_save_path = os.path.join(save_path, 'train_neighbor')
         train_neighbor = {'text': train_neighbor}
         train_neighbor = Dataset.from_dict(train_neighbor)
         train_neighbor.info.description = f"Neighbor data for {args.dataset_name} train set. \
-            Metric: {args.metric}, Block Size: {args.block_size}\
+            Metric: {self.metric}, Block Size: {args.block_size}\
             n_perterbed: {self.n_neighbor}, n_neighbor: {self.n_perturbed}, mask_ratio: {args.mask_ratio}"
         train_neighbor.save_to_disk(train_save_path)
         
@@ -253,6 +253,8 @@ class MemberInferenceAttack(AttackBase):
         test_neighbor = Dataset.from_dict(test_neighbor)
         test_neighbor.save_to_disk(test_save_path)
         
+        print(f"Neighbor data saved to {save_path}")
+        
     def load_neighbor(self,
                       args,
                       train_dataset,
@@ -260,7 +262,7 @@ class MemberInferenceAttack(AttackBase):
         """
         Load the neighbor data.
         """
-        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{args.metric}'
+        save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{self.metric}'
         train_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'train_neighbor'))
         test_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'test_neighbor'))
         
