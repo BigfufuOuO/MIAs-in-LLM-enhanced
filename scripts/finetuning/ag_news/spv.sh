@@ -22,7 +22,6 @@ for block_size in 32 64 128; do
         --block_size $block_size \
         --packing \
         --load_from_disk \
-        --gradient_checkpointing \
         --split_dataset \
         --split_end 0.3 \
         --use_int8 \
