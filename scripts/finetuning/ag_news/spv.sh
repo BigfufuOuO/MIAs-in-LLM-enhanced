@@ -9,7 +9,7 @@ dataset_name="ag_news"
 
 for block_size in 32 64 128; do
     output_dir="./ft_llms/"$model_name"/"$dataset_name"/"bs$block_size"/"$model_type"/"
-    dataset="data/refer_data/openai-community/gpt2/ag_news/bs"$block_size"/"
+    dataset="data/refer_data/"$model_name"/"$dataset_name"/bs"$block_size"/"
     if [ $block_size -gt 64 ]; then
         batch_size=32
     else

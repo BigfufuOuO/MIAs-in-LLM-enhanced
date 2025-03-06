@@ -1,5 +1,6 @@
 from data.factory import DataFactory
 from models.finetuned_llms import FinetunedCasualLM
+from models.mask_llms import MaskLanguageModel
 from attacks.MIA import MemberInferenceAttack
 from parse_args import get_args
 import pandas as pd
@@ -15,7 +16,13 @@ if __name__ == '__main__':
                                     model_path=args.refer_model,)
     else:
         refer_llm = None
-
+    
+    if args.mask_model:
+        mask_llm = MaskLanguageModel(args=args,
+                                     model_path=args.mask_model)
+    else:
+        mask_llm = None
+       
     # data
     data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
     print('Average Length of the string in dataset:', data.get_string_length())
@@ -23,7 +30,8 @@ if __name__ == '__main__':
 
     for metric in args.metric:
         # excute attack
-        attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,)
+        attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,
+                                       mask_model=mask_llm)
         results = attack.execute(target_llm, 
                                 data.train_dataset,
                                 data.test_dataset,

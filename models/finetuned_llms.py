@@ -2,7 +2,7 @@ import transformers
 import torch
 import numpy as np
 from heapq import nlargest
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import time
 
 from .LLMBase import LLMBase
@@ -91,10 +91,19 @@ class FinetunedCasualLM(LLMBase):
         int8_kwargs = {}
         half_kwargs = {}
         print(f"Loading model in int8: {self.args.int8} or half: {self.args.half}")
+        if self.args.int4:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
         if self.args.int8:
-            int8_kwargs = dict(load_in_8bit=True, torch_dtype=torch.bfloat16)
+            bnb_config = BitsAndBytesConfig(
+                load_in_8bit=True,
+            )
         elif self.args.half:
-            half_kwargs = dict(torch_dtype=torch.bfloat16)
+            bnb_config = None
             
         self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
                                                         use_fast=self.tokenizer_use_fast)
@@ -107,8 +116,8 @@ class FinetunedCasualLM(LLMBase):
                                                             return_dict=True,
                                                             device_map='auto',
                                                             revision=self.model_revision,
-                                                            **int8_kwargs,
-                                                            **half_kwargs)
+                                                            torch_dtype=torch.bfloat16,
+                                                            quantization_config=bnb_config,)
             
         except:
             self.model = AutoModelForCausalLM.from_pretrained(model_path, 
@@ -117,8 +126,8 @@ class FinetunedCasualLM(LLMBase):
                                                             revision=self.model_revision, 
                                                             offload_folder='./offload',
                                                             low_cpu_mem_usage=True,
-                                                            **int8_kwargs,
-                                                            **half_kwargs)
+                                                            torch_dtype=torch.bfloat16,
+                                                            quantization_config=bnb_config)
             
         self.model.eval()
 

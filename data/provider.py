@@ -135,7 +135,7 @@ def dataset_prepare(args,
         tokenizer_ = tokenizer
         print(f"Block size: {block_size}, max buffer size: {max_buff_size}")
         # if dir not exists, create it
-        save_path = f"{args.dataset_cache_path}/{args.dataset_name}/{args.dataset_config_name}"
+        save_path = f"{args.dataset_cache_path}/{args.dataset_name}/{args.dataset_config_name}/{block_size}"
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         

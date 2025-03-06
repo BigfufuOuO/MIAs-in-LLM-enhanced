@@ -58,22 +58,13 @@ class MemberInferenceAttack(AttackBase):
         """
         target = model
         reference = self.ref_model
+        mask_model = self.mask_model
         n_neighbor = self.n_neighbor
         n_perturbed = self.n_perturbed
         k = 0.1 # min_k
         
-        if self.mask_model:
-            bnb_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
-                bnb_4bit_use_double_quant=True,
-            )
-            mask_model = AutoModelForSeq2SeqLM.from_pretrained(self.mask_model,
-                                                               quantization_config=bnb_config,
-                                                               torch_dtype=torch.bfloat16,
-                                                               device_map="auto")
-            mask_tokenizer = AutoTokenizer.from_pretrained(self.mask_model)
+        
+            
             
         
         # get locals
@@ -263,6 +254,7 @@ class MemberInferenceAttack(AttackBase):
         Load the neighbor data.
         """
         save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{self.metric}'
+        print(f"Loading neighbor data from {save_path}")
         train_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'train_neighbor'))
         test_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'test_neighbor'))
         

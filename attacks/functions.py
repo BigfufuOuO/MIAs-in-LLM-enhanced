@@ -2,6 +2,7 @@
 This file contains all sorts of methods that are used in the attack.
 """
 from models.finetuned_llms import FinetunedCasualLM
+from models.mask_llms import MaskLanguageModel
 import numpy as np
 import zlib
 import torch
@@ -250,8 +251,7 @@ def Min_k_plus(target: FinetunedCasualLM,
 def SPV_MIA(target: FinetunedCasualLM, 
             reference: FinetunedCasualLM,
             text: list, 
-            mask_model: any = None,
-            mask_tokenizer: any = None,
+            mask_model: MaskLanguageModel = None,
             n_perturbed: int = 5,
             neighbors: list = None
             ):
@@ -266,14 +266,13 @@ def SPV_MIA(target: FinetunedCasualLM,
         k: The proportion of the tokens to consider.
     """
     # assert reference is not None, 'SVA MIA requires a reference model'
-    
-    spv_mia = SpvMIAGenerator(mask_model=mask_model,
-                      mask_tokenizer=mask_tokenizer)
     if neighbors:
         perturbed_texts = neighbors
     else:
-        n_failed, perturbed_texts = spv_mia.tokenize_masks(text,
-                                                        n_perturbed=n_perturbed)
+        perturbed_texts = mask_model.generate_perturbed_texts(
+            texts=text,
+            n_perturbed=n_perturbed,
+        )
     scores = []
     for batch_text, batch_perturbed_text in zip(text, perturbed_texts):
         original_target_loss = target.evaluate(batch_text)
@@ -282,7 +281,6 @@ def SPV_MIA(target: FinetunedCasualLM,
         perturbed_ref_loss = reference.evaluate(batch_perturbed_text, padding=True)
         score = (original_target_loss - original_ref_loss) - (perturbed_target_loss - perturbed_ref_loss)
         scores.append(score)
-    
     if neighbors:
         return {
             "score": scores

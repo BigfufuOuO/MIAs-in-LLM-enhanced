@@ -26,6 +26,7 @@ def get_args():
     parser.add_argument("--mask_ratio", type=float, default=0.2, help="The ratio of the mask.")
 
     # precision
+    parser.add_argument('--int4', action='store_true')
     parser.add_argument('--int8', action='store_true')
     parser.add_argument('--half', action='store_true')
 

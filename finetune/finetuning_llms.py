@@ -154,8 +154,11 @@ if tokenizer.pad_token_id is None:
 if args.use_int4:
     logger.info("Using int4 quantization")
     bnb_config = BitsAndBytesConfig(
-        load_in_8bit=True,
-    )
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
     optimizer = "adamw_bnb_8bit"
 elif args.use_int8:
     logger.info("Using int8 quantization")

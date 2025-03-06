@@ -1,7 +1,23 @@
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--foo', type=str, nargs="+", help='foo help')
+from datasets import Dataset
 
-args = parser.parse_args()
+data = {
+    "text": [
+        ["This is a test sentence.", "This is another test sentence."],
+        ["This is a test sentence.", "This is another test sentence."],
+        ["This is a test sentence.", "This is another test sentence."],
+        ["This is a test sentence.", "This is another test sentence."],
+        
+    ]}
 
-print(args.foo)
+def handle_text(text: list):
+    print(text)
+    return {
+        "how_many_sentences": [len(text)],
+    }
+
+dataset = Dataset.from_dict(data)
+dataset = dataset.map(lambda x: {"text": handle_text(x["text"])},
+                      batch_size=2,
+                      batched=True)
+
+print(dataset)
