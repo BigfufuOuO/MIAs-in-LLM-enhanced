@@ -29,5 +29,4 @@ for block_size in 32 64 128; do
         --use_int8 \
         --gradient_checkpointing \
         -e 10 -bs $batch_size -lr 5e-3 --gradient_accumulation_steps 1 \
-        --token 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
 done
