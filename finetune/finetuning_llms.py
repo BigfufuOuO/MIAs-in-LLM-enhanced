@@ -106,7 +106,7 @@ if not args.disable_flash_attention and model_type != "llama":
 elif args.disable_flash_attention and model_type == "llama":
     logger.info("Model is llama, could be using flash attention...")
 elif not args.disable_flash_attention and torch.cuda.get_device_capability()[0] >= 8:
-    from .llama_patch import replace_attn_with_flash_attn
+    from finetune.llama_patch import replace_attn_with_flash_attn
     logger.info("Using flash attention for llama...")
     replace_attn_with_flash_attn()
     use_flash_attention = True
@@ -123,13 +123,14 @@ else:
     kwargs = {"device_map": None}
     
 # Tokenizer
-if model_type == "llama":
+if model_type == "llaa":
     tokenizer = LlamaTokenizer.from_pretrained(args.model_path, 
                                                 token=access_token,
                                                 trust_remote_code=args.trust_remote_code, 
                                                 cache_dir=args.model_cache_path,
                                                 add_eos_token=args.add_eos_token, 
                                                 add_bos_token=args.add_bos_token,
+                                                device_map="auto",
                                                 use_fast=True)
 else:
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, 
@@ -138,6 +139,7 @@ else:
                                                 cache_dir=args.model_cache_path,
                                                 add_eos_token=args.add_eos_token, 
                                                 add_bos_token=args.add_bos_token,
+                                                device_map="auto",
                                                 use_fast=True)
     
 # THIS IS A HACK TO GET THE PAD TOKEN ID NOT TO BE EOS
@@ -178,7 +180,7 @@ if args.peft == "lora":
         inference_mode=False,
         r=args.lora_rank,
         lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout
+        lora_dropout=args.lora_dropout,
     )
 elif args.peft == "prefix-tuing":
     peft_config = PrefixTuningConfig(
@@ -212,7 +214,7 @@ model = AutoModelForCausalLM.from_pretrained(args.model_path,
 
 # flash attention
 if use_flash_attention:
-    from .llama_patch import llama_forward_with_flash_attn
+    from finetune.llama_patch import llama_forward_with_flash_attn
     assert model.model.layers[0].self_attn.forward.__doc__ == llama_forward_with_flash_attn.__doc__, "Model is not using flash attention"
 
 # kbit training
@@ -222,7 +224,7 @@ if not args.disable_peft:
         logger.info("Preparing model for kbit training...")
         model = prepare_model_for_kbit_training(model)
         if use_flash_attention:
-            from .llama_patch import upcast_layer_for_flash_attention
+            from finetune.llama_patch import upcast_layer_for_flash_attention
             logger.info("Upcasting flash attention layers...")
             model = upcast_layer_for_flash_attention(model, torch_dtype)
     logger.info("Getting PEFT model...")
@@ -267,9 +269,9 @@ training_args = TrainingArguments(
     gradient_checkpointing_kwargs={"use_reentrant": False},
     weight_decay=args.weight_decay,
     adam_epsilon=1e-6,
-    report_to="wandb",
+    report_to="none",
     load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
+    metric_for_best_model="loss",
     save_total_limit=args.save_limit,
     bf16=True if torch.cuda.is_bf16_supported() else False,
     fp16=False if torch.cuda.is_bf16_supported() else True,
@@ -285,7 +287,7 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        EarlyStoppingCallback(early_stopping_patience=3),
+        EarlyStoppingCallback(early_stopping_patience=20),
     ],
 )
 

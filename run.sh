@@ -6,14 +6,14 @@ echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=128
-target_model="ft_llms/openai-community/gpt2/ag_news/bs128/target_base/checkpoint-1830"
-model_name="openai-community/gpt2"
+target_model="ft_llms/openai-community/gpt2-xl/ag_news/bs128/target_base/checkpoint-910"
+model_name="openai-community/gpt2-xl"
 
-refer_model_base="openai-community/gpt2"
+refer_model_base="openai-community/gpt2-xl"
 refer_model_orcale="ft_llms/openai-community/gpt2/ag_news/bs64/refer_orcale/checkpoint-1050"
-refer_model_spv="ft_llms/openai-community/gpt2/ag_news/bs128/self_prompt/checkpoint-420"
+refer_model_spv="ft_llms/openai-community/gpt2-xl/ag_news/bs128/self_prompt/checkpoint-510"
 # neighbor model
-mask_model="google-t5/t5-base"
+mask_model="FacebookAI/roberta-base"
 refer_model_neighbor="FacebookAI/roberta-base"
 dataset_name="ag_news"
 
@@ -102,13 +102,11 @@ accelerate launch run.py \
     --target_model $target_model \
     --model_name $model_name  \
     --refer_model $refer_model_spv \
-    --mask_model $mask_model \
     --dataset_name $dataset_name \
     --metric $metric \
     --block_size $block_size \
     --half --packing \
     --split_dataset \
-    --int8 \
     --use_dataset_cache \
     --use_neighbor_cache
 

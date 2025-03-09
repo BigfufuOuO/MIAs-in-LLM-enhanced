@@ -133,6 +133,7 @@ class MemberInferenceAttack(AttackBase):
         if args.use_neighbor_cache:
             if self.metric == 'neighbor' or self.metric == 'spv_mia':
                 train_set, test_set = self.load_neighbor(args, train_set, test_set)
+                self.neighbor_data_preview(train_set, test_set)
             else:
                 raise ValueError(f"Metric {self.metric} does not support neighbor dataset cache.")
             
@@ -267,3 +268,13 @@ class MemberInferenceAttack(AttackBase):
             'neighbor_texts': test_neighbor['text']
         })
         return train_dataset, test_dataset
+
+    def neighbor_data_preview(self, train_set, test_set):
+        """
+        Preview the neighbor data.
+        """
+        print("===== Neighbor data preview ====")
+        print("Train set:")
+        print(train_set['neighbor_texts'][0][:5])
+        print("Test set:")
+        print(test_set['neighbor_texts'][0][:5])

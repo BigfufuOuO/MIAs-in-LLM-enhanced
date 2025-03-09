@@ -52,17 +52,28 @@ def packing_texts(examples,):
             break
             
         tokenized_inputs = tokenizer_(buffer, truncation=False)["input_ids"] # shape: (num_examples, num_tokens)
-        
-        # concatenate all the tokenized inputs
-        all_token_ids = np.concatenate(tokenized_inputs)
-        
-        for i in range(0, len(all_token_ids), block_size):
-            input_ids = all_token_ids[i: i + block_size]
-            if len(input_ids) == block_size:
-                packed_ids.append(input_ids)
-                input_text = tokenizer_.decode(input_ids)
-                if len(tokenizer_.encode(input_text)) == block_size:
-                    packed_texts.append(input_text)
+        if tokenizer_.bos_token_id:
+            new_list = [row[1:] for row in tokenized_inputs]
+            tokenized_inputs = new_list
+            all_token_ids = np.concatenate(tokenized_inputs)
+            for i in range(0, len(all_token_ids), block_size):
+                input_ids = all_token_ids[i: i + block_size]
+                if len(input_ids) == block_size:
+                    packed_ids.append(input_ids)
+                    input_text = tokenizer_.decode(input_ids)
+                    if len(tokenizer_.encode(input_text)) == block_size + 1:
+                        packed_texts.append(input_text)
+        else:
+            # concatenate all the tokenized inputs
+            all_token_ids = np.concatenate(tokenized_inputs)
+            
+            for i in range(0, len(all_token_ids), block_size):
+                input_ids = all_token_ids[i: i + block_size]
+                if len(input_ids) == block_size:
+                    packed_ids.append(input_ids)
+                    input_text = tokenizer_.decode(input_ids)
+                    if len(tokenizer_.encode(input_text)) == block_size:
+                        packed_texts.append(input_text)
     
     return {
         "text": packed_texts

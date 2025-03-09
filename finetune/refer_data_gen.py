@@ -133,6 +133,7 @@ def generate_text(text):
             num_beams=1,
             do_sample=True,
             max_length=input_ids.size(-1),
+            max_new_tokens=None,
             attention_mask=attention_mask,
         )
     if model_type == "llama":

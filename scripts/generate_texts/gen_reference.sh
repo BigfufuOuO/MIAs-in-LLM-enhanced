@@ -4,7 +4,7 @@ export HF_ENDPOINT="http://hf-mirror.com"
 echo "Start Generating reference data."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-model_name="openai-community/gpt2"
+model_name="Qwen/Qwen2.5-3B"
 dataset_name="ag_news"
 
 for block_size in 32 64 128; do
