@@ -14,6 +14,7 @@ def get_args():
 
     # model definition
     parser.add_argument('--target_model', type=str, default="openai-community/gpt2", help="The target model to attack.")
+    parser.add_argument('--token', type=str, help="The huggingface token to use.")
     parser.add_argument('--refer_model', type=str, help="The reference model to take reference.")
     parser.add_argument('--mask_model', type=str, help="The mask model to use.")
     parser.add_argument('--model_name', type=str, default=None, help="The NAME to the original target model.")

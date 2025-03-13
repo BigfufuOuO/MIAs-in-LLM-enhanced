@@ -1,5 +1,6 @@
-from transformers import AutoTokenizer
+import pprint
+from datasets import Dataset
 
-tokenzier = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B")
+data = Dataset.load_from_disk('./data/neighbor_data/ag_news/bs64/neighbor/train_neighbor')
 
-print(tokenzier.encode("Hello, my name is Wuli."))
+pprint.pprint(data['text'][0])

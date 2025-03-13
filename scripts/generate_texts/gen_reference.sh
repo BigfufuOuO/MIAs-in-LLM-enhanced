@@ -4,7 +4,7 @@ export HF_ENDPOINT="http://hf-mirror.com"
 echo "Start Generating reference data."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-model_name="Qwen/Qwen2.5-3B"
+model_name="Qwen/Qwen2.5-0.5B"
 dataset_name="ag_news"
 
 for block_size in 32 64 128; do
@@ -13,5 +13,6 @@ for block_size in 32 64 128; do
         --model_name $model_name  \
         --block_size $block_size \
         --dataset_name $dataset_name \
-        --save_path $save_path
+        --save_path $save_path \
+        --token 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
 done 

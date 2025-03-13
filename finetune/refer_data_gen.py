@@ -19,6 +19,7 @@ accelerator = Accelerator()
 # ======================== Arguments ======================== #
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", type=str, default="openai-community/gpt2")
+parser.add_argument("--token", type=str, default=None, help="The Hugging Face authentication token.")
 parser.add_argument("--block_size", type=int, default=32)
 
 parser.add_argument("--target_model", type=str)
@@ -73,7 +74,8 @@ else:
             
 print(f"Loading model from {model_path}")
         
-model = AutoModelForCausalLM.from_pretrained(model_path, 
+model = AutoModelForCausalLM.from_pretrained(model_path,
+                                             token=args.token,
                                              quantization_config=bnb_config,
                                              torch_dtype=torch_dtype,
                                              config=config,
@@ -81,7 +83,7 @@ model = AutoModelForCausalLM.from_pretrained(model_path,
                                              cache_dir=args.cache_path)
 
 model_type = config.to_dict()["model_type"]
-if model_type == "llama":
+if model_type == "llaa":
     tokenizer = LlamaTokenizer.from_pretrained(args.model_name)
 else:
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)

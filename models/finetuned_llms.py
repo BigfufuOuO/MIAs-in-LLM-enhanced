@@ -117,6 +117,7 @@ class FinetunedCasualLM(LLMBase):
                                                             device_map='auto',
                                                             revision=self.model_revision,
                                                             torch_dtype=torch.bfloat16,
+                                                            token=self.args.token,
                                                             quantization_config=bnb_config,)
             
         except:
@@ -127,6 +128,7 @@ class FinetunedCasualLM(LLMBase):
                                                             offload_folder='./offload',
                                                             low_cpu_mem_usage=True,
                                                             torch_dtype=torch.bfloat16,
+                                                            token=self.args.token,
                                                             quantization_config=bnb_config)
             
         self.model.eval()

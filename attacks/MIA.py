@@ -179,8 +179,8 @@ class MemberInferenceAttack(AttackBase):
         score_dict['metric'] = self.metric
         results['score'] = np.array(results['score'])
         results['membership'] = np.array(results['membership'])
-        # score_dict['train(member)_score'] = np.mean(results['score'][results['membership']==1])
-        # score_dict['test(nonmember)_score'] = np.mean(results['score'][results['membership']==0])
+        score_dict['train_score'] = np.mean(results['score'][results['membership']==1])
+        score_dict['test_score'] = np.mean(results['score'][results['membership']==0])
         
         # follow https://arxiv.org/pdf/2203.03929.pdf
         # threshold = np.quantile(results['score'][results['membership']==0], 0.9)

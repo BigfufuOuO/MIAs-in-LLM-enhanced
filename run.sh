@@ -1,17 +1,18 @@
+#!/bin/bash
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=5
+export CUDA_VISIBLE_DEVICES=6
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=128
-target_model="ft_llms/openai-community/gpt2-xl/ag_news/bs128/target_base/checkpoint-910"
-model_name="openai-community/gpt2-xl"
+target_model="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/target_base/checkpoint-135"
+model_name="meta-llama/Llama-3.2-1B"
 
-refer_model_base="openai-community/gpt2-xl"
-refer_model_orcale="ft_llms/openai-community/gpt2/ag_news/bs64/refer_orcale/checkpoint-1050"
-refer_model_spv="ft_llms/openai-community/gpt2-xl/ag_news/bs128/self_prompt/checkpoint-510"
+refer_model_base="meta-llama/Llama-3.2-1B"
+refer_model_orcale="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/refer_orcale/checkpoint-135"
+refer_model_spv="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/self_prompt/checkpoint-304"
 # neighbor model
 mask_model="FacebookAI/roberta-base"
 refer_model_neighbor="FacebookAI/roberta-base"
@@ -58,57 +59,58 @@ start_time=$(date +%s)
 #     --use_dataset_cache # use dataset cache to speed up the evaluation, attack only
 
 
-# metric=("refer-base" "lira-base")
-# # Refer-base
-# accelerate launch run.py \
-#     --target_model $target_model \
-#     --model_name $model_name  \
-#     --refer_model $refer_model_base \
-#     --dataset_name $dataset_name \
-#     --metric "${metric[@]}" \
-#     --block_size $block_size \
-#     --half --packing \
-#     --split_dataset \
-#     --use_dataset_cache
+metric=("refer-base" "lira-base")
+# Refer-base
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name  \
+    --refer_model $refer_model_base \
+    --dataset_name $dataset_name \
+    --metric "${metric[@]}" \
+    --block_size $block_size \
+    --half --packing \
+    --split_dataset \
+    --token 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 \
+    --use_dataset_cache
 
-# metric=("refer-orcale" "lira-orcale")
-# # Refer-orcale
-# accelerate launch run.py \
-#     --target_model $target_model \
-#     --model_name $model_name  \
-#     --refer_model $refer_model_orcale \
-#     --dataset_name $dataset_name \
-#     --metric "${metric[@]}" \
-#     --block_size $block_size \
-#     --half --packing \
-#     --split_dataset \
-#     --use_dataset_cache
+metric=("refer-orcale" "lira-orcale")
+# Refer-orcale
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name  \
+    --refer_model $refer_model_orcale \
+    --dataset_name $dataset_name \
+    --metric "${metric[@]}" \
+    --block_size $block_size \
+    --half --packing \
+    --split_dataset \
+    --use_dataset_cache
 
-# metric=("neighbor")
-# # Neighbor
-# accelerate launch run.py \
-#     --target_model $target_model \
-#     --model_name $model_name  \
-#     --refer_model $refer_model_neighbor \
-#     --dataset_name $dataset_name \
-#     --metric $metric \
-#     --block_size $block_size \
-#     --half --packing \
-#     --split_dataset \
-#     --use_dataset_cache
+metric=("neighbor")
+# Neighbor
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name  \
+    --refer_model $refer_model_neighbor \
+    --dataset_name $dataset_name \
+    --metric $metric \
+    --block_size $block_size \
+    --half --packing \
+    --split_dataset \
+    --use_dataset_cache
 
 metric=("spv_mia")
 accelerate launch run.py \
     --target_model $target_model \
     --model_name $model_name  \
     --refer_model $refer_model_spv \
+    --mask_model $mask_model \
     --dataset_name $dataset_name \
     --metric $metric \
     --block_size $block_size \
     --half --packing \
     --split_dataset \
-    --use_dataset_cache \
-    --use_neighbor_cache
+    --use_dataset_cache
 
 end_time=$(date +%s)
 echo ">>>> [TIME]Total time: $(($end_time - $start_time))s"
