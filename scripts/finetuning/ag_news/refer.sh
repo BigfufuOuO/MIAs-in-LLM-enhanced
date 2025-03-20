@@ -1,10 +1,10 @@
 #!/bin/bash
 # set available GPUs
-export CUDA_VISIBLE_DEVICES=5,6
+export CUDA_VISIBLE_DEVICES=6,7
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name="Qwen/Qwen2.5-0.5B"
+model_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 dataset="ag_news"
 model_type="refer_orcale"
 
@@ -26,9 +26,8 @@ for block_size in 32 64 128; do
         --block_size $block_size \
         --packing \
         --split_dataset \
-        --use_int8 \
         --split_begin 0.2 --split_end 0.4 \
-        -e 10 -bs $batch_size -lr 2e-3 --gradient_accumulation_steps 1 \
+        -e 10 -bs $batch_size -lr 4e-3 --gradient_accumulation_steps 1 \
         --token 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 \
         --gradient_checkpointing
 done

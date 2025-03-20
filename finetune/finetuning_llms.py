@@ -287,7 +287,7 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        EarlyStoppingCallback(early_stopping_patience=20),
+        EarlyStoppingCallback(early_stopping_patience=10,),
     ],
 )
 

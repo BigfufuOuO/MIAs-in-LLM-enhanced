@@ -61,8 +61,13 @@ def packing_texts(examples,):
                 if len(input_ids) == block_size:
                     packed_ids.append(input_ids)
                     input_text = tokenizer_.decode(input_ids)
-                    if len(tokenizer_.encode(input_text)) == block_size + 1:
-                        packed_texts.append(input_text)
+                    re_tokenized = tokenizer_.encode(input_text)
+                    if re_tokenized[0] == tokenizer_.bos_token_id:
+                        if len(re_tokenized) == block_size + 1:
+                            packed_texts.append(input_text)
+                    else:
+                        if len(re_tokenized) == block_size:
+                            packed_texts.append(input_text)
         else:
             # concatenate all the tokenized inputs
             all_token_ids = np.concatenate(tokenized_inputs)

@@ -1,5 +1,5 @@
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=4
+export CUDA_VISIBLE_DEVICES=6
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
@@ -17,7 +17,7 @@ refer_model_neighbor="FacebookAI/roberta-base"
 mask_model="FacebookAI/roberta-base"
 dataset_name="ag_news"
 
-metric=("spv_mia")
+metric=("neighbor")
 python -m pdb run.py \
     --target_model $target_model \
     --model_name $model_name \

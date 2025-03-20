@@ -7,12 +7,12 @@ echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=128
-target_model="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/target_base/checkpoint-135"
-model_name="meta-llama/Llama-3.2-1B"
+target_model=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/target_base/checkpoint-350
+model_name=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
-refer_model_base="meta-llama/Llama-3.2-1B"
-refer_model_orcale="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/refer_orcale/checkpoint-135"
-refer_model_spv="ft_llms/meta-llama/Llama-3.2-1B/ag_news/bs128/self_prompt/checkpoint-304"
+refer_model_base=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+refer_model_orcale=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/refer_orcale/checkpoint-700
+refer_model_spv=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/self_prompt/checkpoint-332
 # neighbor model
 mask_model="FacebookAI/roberta-base"
 refer_model_neighbor="FacebookAI/roberta-base"
@@ -34,29 +34,30 @@ exec > >(tee -i "$log_dir/output"$datetime".log")
 
 start_time=$(date +%s)
 
-# metric=("empty")
-# # Empty
-# accelerate launch run.py \
-#     --target_model $target_model \
-#     --model_name $model_name \
-#     --dataset_name $dataset_name \
-#     --metric "${metric[@]}" \
-#     --block_size $block_size \
-#     --half --packing \
-#     --split_dataset
-#     # not use_dataset_cache here to make sure block size correct
+metric=("empty")
+# Empty
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name \
+    --dataset_name $dataset_name \
+    --metric "${metric[@]}" \
+    --block_size $block_size \
+    --half --packing \
+    --split_dataset \
+    --use_dataset_cache
+    # not use_dataset_cache here if to make sure block size correct
 
-# metric=("loss" "ppl" "zlib" "lowercase" "window" "min_k" "min_k++")
-# # Loss
-# accelerate launch run.py \
-#     --target_model $target_model \
-#     --model_name $model_name \
-#     --dataset_name $dataset_name \
-#     --metric "${metric[@]}" \
-#     --block_size $block_size \
-#     --half --packing \
-#     --split_dataset \
-#     --use_dataset_cache # use dataset cache to speed up the evaluation, attack only
+metric=("loss" "ppl" "zlib" "lowercase" "window" "min_k" "min_k++")
+# Loss
+accelerate launch run.py \
+    --target_model $target_model \
+    --model_name $model_name \
+    --dataset_name $dataset_name \
+    --metric "${metric[@]}" \
+    --block_size $block_size \
+    --half --packing \
+    --split_dataset \
+    --use_dataset_cache # use dataset cache to speed up the evaluation, attack only
 
 
 metric=("refer-base" "lira-base")
@@ -97,7 +98,8 @@ accelerate launch run.py \
     --block_size $block_size \
     --half --packing \
     --split_dataset \
-    --use_dataset_cache
+    --use_dataset_cache \
+    --use_neighbor_cache
 
 metric=("spv_mia")
 accelerate launch run.py \
@@ -110,7 +112,8 @@ accelerate launch run.py \
     --block_size $block_size \
     --half --packing \
     --split_dataset \
-    --use_dataset_cache
+    --use_dataset_cache \
+    --use_neighbor_cache
 
 end_time=$(date +%s)
 echo ">>>> [TIME]Total time: $(($end_time - $start_time))s"

@@ -3,6 +3,7 @@ import torch
 from tqdm import tqdm
 import json
 from torch.utils.data import DataLoader
+import numpy as np
 import sys
 here = os.path.dirname(__file__)
 sys.path.append(os.path.join(here, '..'))
@@ -48,6 +49,8 @@ args = parser.parse_args()
 config = AutoConfig.from_pretrained(args.model_name)
 bnb_config = None
 torch_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+
+LOSS_THREHOLD = 2.5
 if args.target_model:
     model_path = args.target_model
 else:
@@ -86,7 +89,7 @@ model_type = config.to_dict()["model_type"]
 if model_type == "llaa":
     tokenizer = LlamaTokenizer.from_pretrained(args.model_name)
 else:
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name,)
     
 if tokenizer.pad_token_id is None:
     print("Pad token id is None, setting to eos token id...")

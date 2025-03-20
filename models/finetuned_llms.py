@@ -207,6 +207,8 @@ class FinetunedCasualLM(LLMBase):
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 labels=input_ids.clone(),
+                output_hidden_states=False,
+                output_attentions=False,
             )
         return output.loss.item()
     
