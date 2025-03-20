@@ -199,7 +199,7 @@ class MemberInferenceAttack(AttackBase):
         score_dict['auc'] = auc(fpr, tpr)
         
         # draw the ROC curve
-        save_path = os.path.join(args.result_dir, args.model_name, args.dataset_name,)
+        save_path = os.path.join(args.result_dir, args.model_path, args.dataset_name,)
         draw_auc_curve(fpr, tpr, 
                        title=str(save_path),
                        save_path=save_path,

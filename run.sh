@@ -8,7 +8,7 @@ echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=128
 target_model=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/target_base/checkpoint-350
-model_name=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+model_path=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
 refer_model_base=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 refer_model_orcale=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/refer_orcale/checkpoint-700
@@ -26,7 +26,7 @@ if [ $bs -ne $block_size ]; then
 fi
 
 
-log_dir="./logs/$model_name"/"$dataset_name"/"bs$block_size/"
+log_dir="./logs/$model_path"/"$dataset_name"/"bs$block_size/"
 datetime=$(date '+%Y%m%d%H%M')
 
 mkdir -p $log_dir
@@ -38,7 +38,7 @@ metric=("empty")
 # Empty
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name \
+    --model_path $model_path \
     --dataset_name $dataset_name \
     --metric "${metric[@]}" \
     --block_size $block_size \
@@ -51,7 +51,7 @@ metric=("loss" "ppl" "zlib" "lowercase" "window" "min_k" "min_k++")
 # Loss
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name \
+    --model_path $model_path \
     --dataset_name $dataset_name \
     --metric "${metric[@]}" \
     --block_size $block_size \
@@ -64,7 +64,7 @@ metric=("refer-base" "lira-base")
 # Refer-base
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name  \
+    --model_path $model_path  \
     --refer_model $refer_model_base \
     --dataset_name $dataset_name \
     --metric "${metric[@]}" \
@@ -78,7 +78,7 @@ metric=("refer-orcale" "lira-orcale")
 # Refer-orcale
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name  \
+    --model_path $model_path  \
     --refer_model $refer_model_orcale \
     --dataset_name $dataset_name \
     --metric "${metric[@]}" \
@@ -91,7 +91,7 @@ metric=("neighbor")
 # Neighbor
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name  \
+    --model_path $model_path  \
     --refer_model $refer_model_neighbor \
     --dataset_name $dataset_name \
     --metric $metric \
@@ -104,7 +104,7 @@ accelerate launch run.py \
 metric=("spv_mia")
 accelerate launch run.py \
     --target_model $target_model \
-    --model_name $model_name  \
+    --model_path $model_path  \
     --refer_model $refer_model_spv \
     --mask_model $mask_model \
     --dataset_name $dataset_name \

@@ -19,7 +19,7 @@ accelerator = Accelerator()
 
 # ======================== Arguments ======================== #
 parser = argparse.ArgumentParser()
-parser.add_argument("--model_name", type=str, default="openai-community/gpt2")
+parser.add_argument("--model_path", type=str, default="openai-community/gpt2")
 parser.add_argument("--token", type=str, default=None, help="The Hugging Face authentication token.")
 parser.add_argument("--block_size", type=int, default=32)
 
@@ -46,18 +46,18 @@ parser.add_argument("--split_end", type=float, default=0.2, help="The end of the
 args = parser.parse_args()
 
 # ======================== Loading ======================== 
-config = AutoConfig.from_pretrained(args.model_name)
+config = AutoConfig.from_pretrained(args.model_path)
 bnb_config = None
 torch_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
-LOSS_THREHOLD = 2.5
+LOSS_THRESHOLD = 2.5
 if args.target_model:
     model_path = args.target_model
 else:
-    model_name = args.model_name
+    model_path = args.model_path
     block_size = args.block_size
     dataset_name = args.dataset_name
-    model_path = f"./ft_llms/{model_name}/{dataset_name}/bs{block_size}/target_base"
+    model_path = f"./ft_llms/{model_path}/{dataset_name}/bs{block_size}/target_base"
     # find dirs
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model path {model_path} does not exist.")
@@ -87,9 +87,9 @@ model = AutoModelForCausalLM.from_pretrained(model_path,
 
 model_type = config.to_dict()["model_type"]
 if model_type == "llaa":
-    tokenizer = LlamaTokenizer.from_pretrained(args.model_name)
+    tokenizer = LlamaTokenizer.from_pretrained(args.model_path)
 else:
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name,)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path,)
     
 if tokenizer.pad_token_id is None:
     print("Pad token id is None, setting to eos token id...")

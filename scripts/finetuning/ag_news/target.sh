@@ -1,10 +1,10 @@
 #!/bin/bash
 # set available GPUs
-export CUDA_VISIBLE_DEVICES=6,7
+export CUDA_VISIBLE_DEVICES=7
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+model_name="facebook/opt-1.3b"
 dataset="ag_news"
 model_type="target_base"
 
