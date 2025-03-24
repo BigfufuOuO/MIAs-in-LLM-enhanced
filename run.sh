@@ -1,18 +1,18 @@
 #!/bin/bash
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=6
+export CUDA_VISIBLE_DEVICES=7
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
 echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
-block_size=128
-target_model=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/target_base/checkpoint-350
-model_path=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+block_size=156
+target_model=ft_llms/Qwen/Qwen2.5-1.5B/ag_news/bs156/target_base/checkpoint-252
+model_path=Qwen/Qwen2.5-1.5B
 
-refer_model_base=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-refer_model_orcale=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/refer_orcale/checkpoint-700
-refer_model_spv=ft_llms/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B/ag_news/bs128/self_prompt/checkpoint-332
+refer_model_base=Qwen/Qwen2.5-1.5B
+refer_model_orcale=ft_llms/Qwen/Qwen2.5-1.5B/ag_news/bs156/refer_orcale/checkpoint-252
+refer_model_spv=ft_llms/Qwen/Qwen2.5-1.5B/ag_news/bs156/self_prompt/checkpoint-381
 # neighbor model
 mask_model="FacebookAI/roberta-base"
 refer_model_neighbor="FacebookAI/roberta-base"
@@ -34,6 +34,8 @@ exec > >(tee -i "$log_dir/output"$datetime".log")
 
 start_time=$(date +%s)
 
+split_end=0.4
+
 metric=("empty")
 # Empty
 accelerate launch run.py \
@@ -43,7 +45,7 @@ accelerate launch run.py \
     --metric "${metric[@]}" \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
+    --split_dataset --split_end $split_end \
     --use_dataset_cache
     # not use_dataset_cache here if to make sure block size correct
 
@@ -56,7 +58,7 @@ accelerate launch run.py \
     --metric "${metric[@]}" \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
+    --split_dataset --split_end $split_end \
     --use_dataset_cache # use dataset cache to speed up the evaluation, attack only
 
 
@@ -70,7 +72,7 @@ accelerate launch run.py \
     --metric "${metric[@]}" \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
+    --split_dataset --split_end $split_end \
     --token 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 \
     --use_dataset_cache
 
@@ -84,22 +86,21 @@ accelerate launch run.py \
     --metric "${metric[@]}" \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
+    --split_dataset --split_end $split_end \
     --use_dataset_cache
 
 metric=("neighbor")
 # Neighbor
 accelerate launch run.py \
     --target_model $target_model \
-    --model_path $model_path  \
+    --model_path $model_path \
     --refer_model $refer_model_neighbor \
     --dataset_name $dataset_name \
     --metric $metric \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
-    --use_dataset_cache \
-    --use_neighbor_cache
+    --split_dataset --split_end $split_end \
+    --use_dataset_cache
 
 metric=("spv_mia")
 accelerate launch run.py \
@@ -111,9 +112,8 @@ accelerate launch run.py \
     --metric $metric \
     --block_size $block_size \
     --half --packing \
-    --split_dataset \
-    --use_dataset_cache \
-    --use_neighbor_cache
+    --split_dataset --split_end $split_end \
+    --use_dataset_cache
 
 end_time=$(date +%s)
 echo ">>>> [TIME]Total time: $(($end_time - $start_time))s"

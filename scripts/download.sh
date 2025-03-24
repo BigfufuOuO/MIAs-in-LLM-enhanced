@@ -1,3 +1,3 @@
 export HF_ENDPOINT="https://hf-mirror.com"
 huggingface-cli download --token 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 \
-    --resume-download facebook/opt-1.3b
+    --resume-download Qwen/Qwen2.5-7B

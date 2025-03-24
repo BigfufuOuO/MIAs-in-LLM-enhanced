@@ -162,8 +162,11 @@ class MemberInferenceAttack(AttackBase):
         # save the results
         if cache_file:
             torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
-            
-        if 'neighbor_texts' in train_result_dict.column_names and 'neighbor_texts' in test_result_dict.column_names:
+        
+        # save neighbor data if not using caches  
+        if not args.use_neighbor_cache \
+            and 'neighbor_texts' in train_result_dict.column_names \
+            and 'neighbor_texts' in test_result_dict.column_names:
             self.save_neighbor(args, 
                                train_result_dict['neighbor_texts'], 
                                test_result_dict['neighbor_texts'])

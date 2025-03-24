@@ -16,4 +16,4 @@ results/
 logs/
 
 nohup.out
-scan.sh
+*.sh

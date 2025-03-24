@@ -21,7 +21,7 @@ from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_tr
 
 from transformers import LlamaTokenizer, get_scheduler
 from utils import get_logger, print_trainable_parameters
-from .callbacks import LossStoppingCallback
+from callbacks import LossStoppingCallback
 
 logger = get_logger("finetune", "info")
 
@@ -288,7 +288,6 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        EarlyStoppingCallback(early_stopping_patience=10,),
         LossStoppingCallback(loss_threshold=2.45),
     ],
 )
