@@ -37,13 +37,23 @@ class DataFactory:
             train_indices = np.random.permutation(train_indices)
             test_indices = np.random.permutation(test_indices)
             
-            start = int(len(train) * args.split_begin)
-            end = int(len(train) * args.split_end)
-            train = train.select(train_indices[start:end])
+            if args.split_train_num:
+                start = args.split_train_begin
+                end = start + args.split_train_num
+                train = train.select(train_indices[start:end])
+            else:
+                start = int(len(train) * args.split_begin)
+                end = int(len(train) * args.split_end)
+                train = train.select(train_indices[start:end])
             
-            start = int(len(test) * args.split_begin)
-            end = int(len(test) * args.split_end)
-            test = test.select(test_indices[start:end])
+            if args.split_test_num:
+                start = args.split_test_begin
+                end = start + args.split_test_num
+                test = test.select(test_indices[start:end])
+            else:
+                start = int(len(test) * args.split_begin)
+                end = int(len(test) * args.split_end)
+                test = test.select(test_indices[start:end])
             return train, test
             
         return train, test

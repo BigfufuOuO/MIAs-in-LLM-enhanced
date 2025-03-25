@@ -74,14 +74,17 @@ parser.add_argument("--save_limit", type=int, default=None)
 parser.add_argument("--pad_token_id", default=None, type=int, help="The end of sequence token.")
 parser.add_argument("--add_eos_token", action="store_true", help="Add EOS token to tokenizer", default=False)
 parser.add_argument("--add_bos_token", action="store_true", help="Add BOS token to tokenizer", default=False)
-parser.add_argument("--validation_split_percentage", default=0.2, help="The percentage of the train set used as validation set in case there's no validation split")
+parser.add_argument("--validation_split_percentage", default=0.4, help="The percentage of the train set used as validation set in case there's no validation split")
 
 # debug and split
 parser.add_argument("--debug", action="store_true", help="Debug mode.")
 parser.add_argument("--split_dataset", action="store_true", help="Use split dataset.")
-parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning of the split.")
-parser.add_argument("--split_end", type=float, default=0.2, help="The end of the split.")
-
+parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning ratio of the split.")
+parser.add_argument("--split_end", type=float, default=0.2, help="The end ratio of the split.")
+parser.add_argument("--split_train_begin", type=int, default=0, help="The index of the beginning of the train set in the split.")
+parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
+parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
+parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
 args = parser.parse_args()
 
 # ================ Parse arguments ================
@@ -288,7 +291,7 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        LossStoppingCallback(loss_threshold=2.45),
+        LossStoppingCallback(loss_threshold=2.56),
     ],
 )
 

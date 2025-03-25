@@ -34,7 +34,7 @@ parser.add_argument("--save_path", type=str, required=True, help="The path to sa
 parser.add_argument("--load_from_disk", action="store_true", default=False, help="Load dataset from disk.")
 parser.add_argument("--packing", action="store_true", default=False)
 parser.add_argument("--preprocessing_num_workers", type=int, default=1)
-parser.add_argument("--validation_split_percentage", default=0.2,
+parser.add_argument("--validation_split_percentage", default=0.4,
                     help="The percentage of the train set used as validation set in case there's no validation split")
 
 # debug
@@ -42,6 +42,10 @@ parser.add_argument("--debug", action="store_true", help="Debug mode.")
 parser.add_argument("--split_dataset", action="store_true", help="Use small dataset.", default=False)
 parser.add_argument("--split_begin", type=float, default=0.0, help="The beginning of the split.")
 parser.add_argument("--split_end", type=float, default=0.2, help="The end of the split.")
+parser.add_argument("--split_train_begin", type=int, default=0, help="The index of the beginning of the train set in the split.")
+parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
+parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
+parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
 
 args = parser.parse_args()
 
@@ -120,6 +124,8 @@ def generate_text(text):
     prompt = text
     inputs = tokenizer(prompt, 
                           return_tensors="pt", 
+                          truncation=True,
+                          max_length=args.block_size,
                           padding=True).to(accelerator.device)
     input_ids = inputs.input_ids
     clipped_ids = inputs.input_ids[:, :16]

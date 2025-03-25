@@ -1,7 +1,6 @@
 from data.factory import DataFactory
-from models.finetuned_llms import FinetunedCasualLM
-from models.mask_llms import MaskLanguageModel
 from attacks.MIA import MemberInferenceAttack
+from attacks.utils import load_target_models, load_refer_models
 from parse_args import get_args
 import pandas as pd
 
@@ -9,19 +8,7 @@ args = get_args()
 
 # ======================== MAIN ========================
 if __name__ == '__main__':
-    target_llm = FinetunedCasualLM(args=args,
-                                model_path=args.target_model,)
-    if args.refer_model:
-        refer_llm = FinetunedCasualLM(args=args,
-                                    model_path=args.refer_model,)
-    else:
-        refer_llm = None
-    
-    if args.mask_model:
-        mask_llm = MaskLanguageModel(args=args,
-                                     model_path=args.mask_model)
-    else:
-        mask_llm = None
+    target_llm = load_target_models(args, args.model_path)
        
     # data
     data = DataFactory(data_path=args.dataset_name, args=args, tokenizer=target_llm.tokenizer)
@@ -29,6 +16,7 @@ if __name__ == '__main__':
     print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
     for metric in args.metric:
+        refer_llm, mask_llm= load_refer_models(args, args.refer_model, metric) 
         # excute attack
         attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,
                                        mask_model=mask_llm)

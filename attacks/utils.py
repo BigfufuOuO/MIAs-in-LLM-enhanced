@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import auc
 import os
 import pandas as pd
+from models.finetuned_llms import FinetunedCasualLM
+from models.mask_llms import MaskLanguageModel
 
 def draw_auc_curve(fpr, tpr,
                    title='ROC curve',
@@ -41,3 +43,81 @@ def save_to_csv(results,
               mode='a',
               header=True if not os.path.exists(save_path) else False,
               index=False)
+    
+def load_target_models(args,
+                       model_name: str,
+                       llm_dir: str = './ft_llms',
+                        ):
+    """
+    Load the target models from accoding to the model_name.
+    """
+    if args.target_model is None:
+        dataset_name = args.dataset_name
+        block_size = args.block_size
+        target_path = os.path.join(llm_dir, model_name)
+        target_path = os.path.join(target_path, f'{dataset_name}/bs{block_size}/target_base')
+        target_files = os.listdir(target_path)
+        target_path = os.path.join(target_path, target_files[-1])
+        target_llm = FinetunedCasualLM(args=args,
+                                       model_path=target_path)
+    else:
+        target_llm = FinetunedCasualLM(args=args,
+                                       model_path=args.target_model)
+        
+    return target_llm
+    
+   
+    
+def load_refer_models(args,
+                      model_name: str,
+                      metric: str,
+                      llm_dir: str = './ft_llms',
+                    mask_llm: str = "FacebookAI/roberta-base",):
+    """
+    Load the refer models from accoding to the model_name and metric.
+    """
+    refer_methods = ['refer_base', 'refer_orcale', 'lira_base', 'lira_orcale', 'spv_mia']
+    if metric not in refer_methods:
+        return None, None
+    
+    if args.refer_model is None:
+        if 'base' in metric:
+            refer_llm = refer_llm = FinetunedCasualLM(args=args,
+                                                    model_path=model_name)
+        elif 'orcale' in metric:
+            dataset_name = args.dataset_name
+            block_size = args.block_size
+            refer_path = os.path.join(llm_dir, model_name)
+            refer_path = os.path.join(refer_path, f'{dataset_name}/bs{block_size}/refer_orcale')
+            refer_files = os.listdir(refer_path)
+            refer_path = os.path.join(refer_path, refer_files[-1])
+            refer_llm = FinetunedCasualLM(args=args,
+                                           model_path=refer_path)
+        elif metric == 'neighbor':
+            refer_llm = MaskLanguageModel(args=args,
+                                          model_path=mask_llm)
+        elif metric == 'spv_mia':
+            dataset_name = args.dataset_name
+            block_size = args.block_size
+            refer_path = os.path.join(llm_dir, model_name)
+            refer_path = os.path.join(refer_path, f'{dataset_name}/bs{block_size}/self_prompt')
+            refer_files = os.listdir(refer_path)
+            refer_path = os.path.join(refer_path, refer_files[-1])
+            refer_llm = FinetunedCasualLM(args=args,
+                                           model_path=refer_path)
+        else:
+            raise ValueError(f"Invalid metric: {metric}")
+    
+    if metric != 'spv_mia':
+        return refer_llm, None
+    else:
+        if args.spv_model is None:
+            spv_llm = MaskLanguageModel(args=args,
+                                        model_path=mask_llm)
+        else:
+            spv_llm = MaskLanguageModel(args=args,
+                                        model_path=args.mask_model)
+        return refer_llm, spv_llm
+        
+        
+

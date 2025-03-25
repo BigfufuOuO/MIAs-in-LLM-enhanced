@@ -51,7 +51,7 @@ def packing_texts(examples,):
             # if buffer is empty, break
             break
             
-        tokenized_inputs = tokenizer_(buffer, truncation=False)["input_ids"] # shape: (num_examples, num_tokens)
+        tokenized_inputs = tokenizer_(buffer, truncation=True, max_length=1024)["input_ids"] # shape: (num_examples, num_tokens)
         if tokenizer_.bos_token_id:
             new_list = [row[1:] for row in tokenized_inputs]
             tokenized_inputs = new_list
@@ -121,17 +121,25 @@ def dataset_prepare(args,
         train_dataset = split_dataset["train"]
         valid_dataset = split_dataset["test"]
     else:
-        train_dataset = datasets.load_dataset(
-            args.dataset_name,
-            args.dataset_config_name,
-            split=f"train[:{int((1-args.validation_split_percentage)*100)}%]"
-        )
-        
-        valid_dataset = datasets.load_dataset(
-            args.dataset_name,
-            args.dataset_config_name,
-            split=f"train[{int((1-args.validation_split_percentage)*100)}%:]",
-        )
+        dataset = datasets.load_dataset(args.dataset_name, args.dataset_config_name, split="train")
+        num_rows = dataset.num_rows
+        # if length of dataset is too large, split it through index
+        if num_rows > 10 ** 5:
+            split = int(10 ** 5 * (1 - args.validation_split_percentage))
+            train_dataset = dataset.select(range(0, split))
+            valid_dataset = dataset.select(range(split, 10**5))
+        else:   
+            train_dataset = datasets.load_dataset(
+                args.dataset_name,
+                args.dataset_config_name,
+                split=f"train[:{int((1-args.validation_split_percentage)*100)}%]"
+            )
+            
+            valid_dataset = datasets.load_dataset(
+                args.dataset_name,
+                args.dataset_config_name,
+                split=f"train[{int((1-args.validation_split_percentage)*100)}%:]",
+            )
     
     column = train_dataset.column_names
     possible_text_columns = ["text", "document", "content"]
