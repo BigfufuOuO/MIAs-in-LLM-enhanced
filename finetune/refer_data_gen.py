@@ -110,7 +110,7 @@ train_dataset, valid_dataset = data.train_dataset, data.test_dataset
 train_preview, valid_preview = data.get_preview()
 print(f"Train dataset preview: {train_preview}")
 print(f"Valid dataset preview: {valid_preview}")
-prompt_dataset = Dataset.from_dict(train_dataset[:int(len(train_dataset) * 0.25)])
+prompt_dataset = Dataset.from_dict(train_dataset[:int(len(train_dataset) * 0.2)])
 prompt_dataloader = DataLoader(prompt_dataset, batch_size=1)
 
 

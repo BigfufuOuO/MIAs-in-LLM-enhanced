@@ -16,7 +16,7 @@ if __name__ == '__main__':
     print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
     for metric in args.metric:
-        refer_llm, mask_llm= load_refer_models(args, args.refer_model, metric) 
+        refer_llm, mask_llm= load_refer_models(args, args.model_path, metric) 
         # excute attack
         attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,
                                        mask_model=mask_llm)

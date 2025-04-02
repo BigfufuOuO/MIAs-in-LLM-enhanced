@@ -8,7 +8,7 @@ class MaskLanguageModel(LLMBase):
     def __init__(self, args=None, 
                  arch=None, 
                  model_path='google-t5/t5-base', 
-                 max_seq_len=1024):
+                 max_seq_len=256):
         if ':' in model_path:
             model_path, self.model_revision = model_path.split(':')
         else:
@@ -161,7 +161,7 @@ class MaskLanguageModel(LLMBase):
         inputs = self.tokenizer(masked_texts, 
                                 return_tensors='pt', 
                                 padding=True,
-                                truncation=True).to(self.model.device)
+                                truncation=True,).to(self.model.device)
 
         n_failed = 0
         extracted_fills = self.extract_fills(inputs)
@@ -225,7 +225,7 @@ class MaskLanguageModel(LLMBase):
                                     return_tensors='pt', 
                                     truncation=True,
                                     padding='longest',
-                                    max_length=self.max_seq_len).input_ids.to(self.model.device)
+                                    max_length=self.max_seq_len,).input_ids.to(self.model.device)
         batch_size = tokenized.shape[0]
         # tokenized shape: (batch_size, max_seq_len)
         

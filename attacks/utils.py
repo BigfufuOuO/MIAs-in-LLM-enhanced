@@ -57,6 +57,8 @@ def load_target_models(args,
         target_path = os.path.join(llm_dir, model_name)
         target_path = os.path.join(target_path, f'{dataset_name}/bs{block_size}/target_base')
         target_files = os.listdir(target_path)
+        # sort the files
+        target_files = sorted(target_files, key=lambda x: int(x.split('-')[-1]))
         target_path = os.path.join(target_path, target_files[-1])
         target_llm = FinetunedCasualLM(args=args,
                                        model_path=target_path)
@@ -76,25 +78,27 @@ def load_refer_models(args,
     """
     Load the refer models from accoding to the model_name and metric.
     """
-    refer_methods = ['refer_base', 'refer_orcale', 'lira_base', 'lira_orcale', 'spv_mia']
+    refer_methods = ['refer-base', 'refer-orcale', 'lira-base', 'lira-orcale', 'neighbor', 'spv_mia']
     if metric not in refer_methods:
+        print(f"Warning: {metric} not in refer_methods. Please check if it is registered.")
         return None, None
     
     if args.refer_model is None:
         if 'base' in metric:
-            refer_llm = refer_llm = FinetunedCasualLM(args=args,
-                                                    model_path=model_name)
+            refer_llm = FinetunedCasualLM(args=args,
+                                          model_path=model_name)
         elif 'orcale' in metric:
             dataset_name = args.dataset_name
             block_size = args.block_size
             refer_path = os.path.join(llm_dir, model_name)
             refer_path = os.path.join(refer_path, f'{dataset_name}/bs{block_size}/refer_orcale')
             refer_files = os.listdir(refer_path)
+            refer_files = sorted(refer_files, key=lambda x: int(x.split('-')[-1]))
             refer_path = os.path.join(refer_path, refer_files[-1])
             refer_llm = FinetunedCasualLM(args=args,
                                            model_path=refer_path)
         elif metric == 'neighbor':
-            refer_llm = MaskLanguageModel(args=args,
+            refer_llm = FinetunedCasualLM(args=args,
                                           model_path=mask_llm)
         elif metric == 'spv_mia':
             dataset_name = args.dataset_name
@@ -111,7 +115,7 @@ def load_refer_models(args,
     if metric != 'spv_mia':
         return refer_llm, None
     else:
-        if args.spv_model is None:
+        if args.mask_model is None:
             spv_llm = MaskLanguageModel(args=args,
                                         model_path=mask_llm)
         else:

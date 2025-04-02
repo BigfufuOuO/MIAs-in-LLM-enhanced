@@ -62,11 +62,7 @@ class MemberInferenceAttack(AttackBase):
         n_neighbor = self.n_neighbor
         n_perturbed = self.n_perturbed
         k = 0.1 # min_k
-        
-        
-            
-            
-        
+
         # get locals
         locals_ = locals()
         # access the function from the function map, according to the metric.
@@ -135,7 +131,7 @@ class MemberInferenceAttack(AttackBase):
                 train_set, test_set = self.load_neighbor(args, train_set, test_set)
                 self.neighbor_data_preview(train_set, test_set)
             else:
-                raise ValueError(f"Metric {self.metric} does not support neighbor dataset cache.")
+                print(f"Warning:Metric {self.metric} does not support neighbor dataset cache.")
             
         # train set
         print("Evaluating train set:")
@@ -206,7 +202,7 @@ class MemberInferenceAttack(AttackBase):
         draw_auc_curve(fpr, tpr, 
                        title=str(save_path),
                        save_path=save_path,
-                       metric=args.metric)
+                       metric=self.metric)
         
         # Get TPR@x%FPR
         for rate in [0.001, 0.005, 0.01, 0.05]:

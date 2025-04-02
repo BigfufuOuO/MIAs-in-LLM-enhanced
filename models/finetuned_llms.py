@@ -330,8 +330,7 @@ class FinetunedCasualLM(LLMBase):
         tokenized = self._tokenizer(texts, 
                                     return_tensors='pt', 
                                     truncation=True,
-                                    padding='longest',
-                                    max_length=self.max_seq_len).input_ids.to(self.model.device)
+                                    padding='longest',).input_ids.to(self.model.device)
         batch_size = tokenized.shape[0]
         
         dropout = torch.nn.Dropout(p)

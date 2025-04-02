@@ -1,18 +1,18 @@
 #!/bin/bash
 # self prompt reference tranining
-export CUDA_VISIBLE_DEVICES=6
+export CUDA_VISIBLE_DEVICES=0
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name=openai-community/gpt2
+model_name=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
 model_type="self_prompt"
-dataset_name="LLM-PBE/enron-email"
+dataset_name=ag_news
 
 log_dir="./logs/finetuned/$model_name"/"$dataset_name"/"bs$block_size/"$model_type"/"
 mkdir -p $log_dir
 exec > >(tee -i "$log_dir/output"$datetime".log")
 
-for block_size in 32 64 128; do
+for block_size in 160 192; do
     output_dir="./ft_llms/"$model_name"/"$dataset_name"/"bs$block_size"/"$model_type"/"
     dataset="data/refer_data/"$model_name"/"$dataset_name"/bs"$block_size"/"
     if [ $block_size -gt 64 ]; then
