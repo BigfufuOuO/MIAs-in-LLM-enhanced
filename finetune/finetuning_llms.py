@@ -23,8 +23,6 @@ from transformers import LlamaTokenizer, get_scheduler
 from utils import get_logger, print_trainable_parameters
 from callbacks import LossStoppingCallback
 
-logger = get_logger("finetune", "info")
-
 # ================ Arguments ================
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="openai-community/gpt2", help="The original model path.")
@@ -88,6 +86,8 @@ parser.add_argument("--split_test_num", type=int, help="The number of examples i
 args = parser.parse_args()
 
 # ================ Parse arguments ================
+log_dir=f"./logs/finetuned/{args.model_path}/{args.dataset_name}/bs{args.block_size}/{args.model_type}"
+logger = get_logger("finetune", log_dir, "info")
 # Accelerator
 accelerator = Accelerator()
 
@@ -291,7 +291,7 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        LossStoppingCallback(loss_threshold=2.56),
+        LossStoppingCallback(loss_threshold=2.5),
     ],
 )
 

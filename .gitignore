@@ -15,5 +15,5 @@ results/
 # logs
 logs/
 
-nohup.out
+*.out
 *.sh

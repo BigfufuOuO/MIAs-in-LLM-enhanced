@@ -40,6 +40,8 @@ class DataFactory:
             if args.split_train_num:
                 start = args.split_train_begin
                 end = start + args.split_train_num
+                if end > len(train_indices):
+                    print(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
                 train = train.select(train_indices[start:end])
             else:
                 start = int(len(train) * args.split_begin)
@@ -49,6 +51,8 @@ class DataFactory:
             if args.split_test_num:
                 start = args.split_test_begin
                 end = start + args.split_test_num
+                if end > len(train_indices):
+                    print(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
                 test = test.select(test_indices[start:end])
             else:
                 start = int(len(test) * args.split_begin)

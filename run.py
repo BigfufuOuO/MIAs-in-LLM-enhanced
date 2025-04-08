@@ -3,6 +3,7 @@ from attacks.MIA import MemberInferenceAttack
 from attacks.utils import load_target_models, load_refer_models
 from parse_args import get_args
 import pandas as pd
+import torch
 
 args = get_args()
 
@@ -16,19 +17,21 @@ if __name__ == '__main__':
     print('Data preview:', data.get_preview()[0], '\n', data.get_preview()[1])
 
     for metric in args.metric:
-        refer_llm, mask_llm= load_refer_models(args, args.model_path, metric) 
-        # excute attack
-        attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,
-                                       mask_model=mask_llm)
-        results = attack.execute(target_llm, 
-                                data.train_dataset,
-                                data.test_dataset,
-                                args=args)
-        results = attack.evaluate(args, results)
+        with torch.no_grad():
+            refer_llm, mask_llm= load_refer_models(args, args.model_path, metric) 
+            # excute attack
+            attack = MemberInferenceAttack(metric=metric, ref_model=refer_llm,
+                                        mask_model=mask_llm)
+            results = attack.execute(target_llm, 
+                                    data.train_dataset,
+                                    data.test_dataset,
+                                    args=args)
+            results = attack.evaluate(args, results)
+            
+            # Display result
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.expand_frame_repr', False)  # Avoid line break
+            result_df = pd.DataFrame.from_dict(results, orient='index').T
+            print("=========ENDING==========")
+            print(result_df)
         
-        # Display result
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.expand_frame_repr', False)  # Avoid line break
-        result_df = pd.DataFrame.from_dict(results, orient='index').T
-        print("=========ENDING==========")
-        print(result_df)

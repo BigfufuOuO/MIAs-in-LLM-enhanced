@@ -7,18 +7,22 @@ import random
 import torch
 
 
-def get_logger(name: str, level: Literal["info", "warning", "debug"]) -> logging.Logger:
+def get_logger(name: str, 
+               file_name: str,
+               level: Literal["info", "warning", "debug"]) -> logging.Logger:
     """
     Get a logger with rich handler. Rich handler is a handler that prints logs with rich formatting, 
     where logs are colored and formatted.
     """
     rich_handler = RichHandler(level=logging.INFO, rich_tracebacks=True, markup=True)
-
+    file_handler = logging.FileHandler(f"{file_name}.log")
+        
     logger = logging.getLogger(name)
     logger.setLevel(logging._nameToLevel[level.upper()])
 
     if not logger.handlers:
         logger.addHandler(rich_handler)
+        logger.addHandler(file_handler)
 
     logger.propagate = False
 
