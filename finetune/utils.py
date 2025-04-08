@@ -15,13 +15,17 @@ def get_logger(name: str,
     where logs are colored and formatted.
     """
     rich_handler = RichHandler(level=logging.INFO, rich_tracebacks=True, markup=True)
-    file_handler = logging.FileHandler(f"{file_name}.log")
+    
+    datetime = "{:%Y-%m-%d_%H-%M-%S}".format(datetime.datetime.now())
+    file_handler = logging.FileHandler(f"{file_name}_{datetime}.log")
         
     logger = logging.getLogger(name)
     logger.setLevel(logging._nameToLevel[level.upper()])
 
     if not logger.handlers:
         logger.addHandler(rich_handler)
+        
+    if file_name:
         logger.addHandler(file_handler)
 
     logger.propagate = False

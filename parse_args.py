@@ -37,6 +37,7 @@ def get_args():
     parser.add_argument("--preprocessing_num_workers", type=int, default=1, help="The number of workers to use for the preprocessing.")
     parser.add_argument("--use_dataset_cache", action="store_true", default=False, help="Whether to use dataset cache.")
     parser.add_argument("--load_from_disk", action="store_true", default=False, help="Whether to load the dataset from disk.")
+    parser.add_argument("--log_dir", type=str, required=True, help="The log directory to save the logs.")
 
     # debug
     parser.add_argument("--debug", action="store_true", help="Debug mode.")

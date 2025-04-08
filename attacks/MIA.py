@@ -15,6 +15,7 @@ from .utils import draw_auc_curve, save_to_csv
 import inspect
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, BitsAndBytesConfig
+from finetune.utils import get_logger
 
 from data.factory import DataFactory
 
@@ -28,6 +29,7 @@ class MemberInferenceAttack(AttackBase):
     Reference implementation: https://github.com/ftramer/LM_Memorization/blob/main/extraction.py
     """
     def __init__(self, 
+                 logger,
                  metric: str = 'ppl', 
                  ref_model=None,
                  mask_model=None,
@@ -41,6 +43,7 @@ class MemberInferenceAttack(AttackBase):
         self.mask_model = mask_model
         self.n_neighbor = n_neighbor
         self.n_perturbed = n_perturbed
+        self.logger = logger
     
     @torch.no_grad()
     def get_score(self, 
@@ -134,11 +137,11 @@ class MemberInferenceAttack(AttackBase):
                 print(f"Warning:Metric {self.metric} does not support neighbor dataset cache.")
             
         # train set
-        print("Evaluating train set:")
+        self.logger.info("Evaluating train set:")
         train_result_dict = self.get_score(target, train_set)
         results['score'] = train_result_dict['score']
         results['membership'] = [1] * len(train_set)
-        print(f"Train avg score: {np.mean(np.array(results['score']))}")
+        self.logger.info(f"Train avg score: {np.mean(np.array(results['score']))}")
         
         test_scores = []
              
@@ -149,12 +152,12 @@ class MemberInferenceAttack(AttackBase):
             resume_i = -1
         
         # test set
-        print("Evaluating test set:")
+        self.logger.info("Evaluating test set:")
         test_result_dict = self.get_score(target, test_set)
         test_scores = test_result_dict['score']
         results['score'] += test_scores
         results['membership'] += [0] * len(test_set)
-        print(f"Test avg score: {np.mean(np.array(test_scores))}")
+        self.logger.info(f"Test avg score: {np.mean(np.array(test_scores))}")
         # save the results
         if cache_file:
             torch.save({'results': results, 'i': -1, 'member': -1}, cache_file)
@@ -254,7 +257,7 @@ class MemberInferenceAttack(AttackBase):
         Load the neighbor data.
         """
         save_path = f'./data/neighbor_data/{args.dataset_name}/bs{args.block_size}/{self.metric}'
-        print(f"Loading neighbor data from {save_path}")
+        self.logger.info(f"Loading neighbor data from {save_path}")
         train_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'train_neighbor'))
         test_neighbor = Dataset.load_from_disk(os.path.join(save_path, 'test_neighbor'))
         
@@ -272,8 +275,8 @@ class MemberInferenceAttack(AttackBase):
         """
         Preview the neighbor data.
         """
-        print("===== Neighbor data preview ====")
-        print("Train set:")
-        print(train_set['neighbor_texts'][0][:5])
-        print("Test set:")
-        print(test_set['neighbor_texts'][0][:5])
+        self.logger.info("===== Neighbor data preview ====")
+        self.logger.info("Train set:")
+        self.logger.info(train_set['neighbor_texts'][0][:5])
+        self.logger.info("Test set:")
+        self.logger.info(test_set['neighbor_texts'][0][:5])

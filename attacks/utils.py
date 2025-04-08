@@ -71,6 +71,7 @@ def load_target_models(args,
    
     
 def load_refer_models(args,
+                      logger,
                       model_name: str,
                       metric: str,
                       llm_dir: str = './ft_llms',
@@ -80,7 +81,7 @@ def load_refer_models(args,
     """
     refer_methods = ['refer-base', 'refer-orcale', 'lira-base', 'lira-orcale', 'neighbor', 'spv_mia']
     if metric not in refer_methods:
-        print(f"Warning: {metric} not in refer_methods. Please check if it is registered.")
+        logger.warning(f"Warning: {metric} not in refer_methods. Please check if it is registered.")
         return None, None
     
     if args.refer_model is None:
