@@ -38,6 +38,8 @@ def get_args():
     parser.add_argument("--use_dataset_cache", action="store_true", default=False, help="Whether to use dataset cache.")
     parser.add_argument("--load_from_disk", action="store_true", default=False, help="Whether to load the dataset from disk.")
     parser.add_argument("--log_dir", type=str, required=True, help="The log directory to save the logs.")
+    parser.add_argument("--mode", type=str, required=True, choices=["default", "neighbor",
+                                                                    "ft-phase"], help="The mode to run the program in.")
 
     # debug
     parser.add_argument("--debug", action="store_true", help="Debug mode.")

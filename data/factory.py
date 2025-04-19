@@ -5,6 +5,9 @@ from datasets import Dataset
 import numpy as np
 import os
 
+from finetune.utils import get_logger
+logger = get_logger(__name__, level="info")
+
 class DataFactory:
     def __init__(self, data_path, args, tokenizer):
         self.data_path = data_path
@@ -29,7 +32,7 @@ class DataFactory:
             return train, test
         
         if args.split_dataset:
-            print("Using split dataset.")
+            logger.info("Using split dataset.")
             np.random.seed(42)
             # reshuffle the indices
             train_indices = np.arange(len(train))
@@ -41,7 +44,7 @@ class DataFactory:
                 start = args.split_train_begin
                 end = start + args.split_train_num
                 if end > len(train_indices):
-                    print(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
+                    logger.warning(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
                 train = train.select(train_indices[start:end])
             else:
                 start = int(len(train) * args.split_begin)
@@ -52,7 +55,7 @@ class DataFactory:
                 start = args.split_test_begin
                 end = start + args.split_test_num
                 if end > len(train_indices):
-                    print(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
+                    logger.warning(f"Split train num [{start}:{end}] is out of range {len(train_indices)}, using all the data.")
                 test = test.select(test_indices[start:end])
             else:
                 start = int(len(test) * args.split_begin)

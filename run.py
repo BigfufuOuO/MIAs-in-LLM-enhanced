@@ -5,11 +5,13 @@ from parse_args import get_args
 from finetune.utils import get_logger
 import pandas as pd
 import torch
+import time
 
 args = get_args()
 logger = get_logger("MIA", args.log_dir, "info")
 
 # ======================== MAIN ========================
+start_time = time.time()
 if __name__ == '__main__':
     target_llm = load_target_models(args, args.model_path)
        
@@ -22,18 +24,26 @@ if __name__ == '__main__':
         with torch.no_grad():
             refer_llm, mask_llm= load_refer_models(args, logger, args.model_path, metric) 
             # excute attack
-            attack = MemberInferenceAttack(logger=logger, metric=metric, ref_model=refer_llm,
-                                        mask_model=mask_llm)
-            results = attack.execute(target_llm, 
-                                    data.train_dataset,
+            attack = MemberInferenceAttack(logger=logger, 
+                                           metric=metric, 
+                                           target_model=target_llm,
+                                           ref_model=refer_llm,
+                                            mask_model=mask_llm, 
+                                            args=args)
+            results = attack.execute(data.train_dataset,
                                     data.test_dataset,
                                     args=args)
-            results = attack.evaluate(args, results)
-            
+            results = attack.evaluate(args, results,
+                                      extra_llms=(refer_llm, mask_llm),)
+            del refer_llm, mask_llm
+            torch.cuda.empty_cache()
             # Display result
             # pd.set_option('display.max_columns', None)
             # pd.set_option('display.expand_frame_repr', False)  # Avoid line break
             result_df = pd.DataFrame.from_dict(results, orient='index')
             logger.info("=========ENDING==========")
             logger.info(result_df)
+    
+    end_time = time.time()
+    logger.info(f"Total time: {end_time - start_time:.1f} seconds")
         

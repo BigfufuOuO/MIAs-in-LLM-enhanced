@@ -26,6 +26,7 @@ from callbacks import LossStoppingCallback
 # ================ Arguments ================
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="openai-community/gpt2", help="The original model path.")
+parser.add_argument("--model_type", type=str, choices=['target_base', 'refer_orcale', 'self_prompt'], help="The model type.")
 parser.add_argument("--dataset_name", type=str, default="wikitext", help="The dataset name.")
 parser.add_argument("--dataset_config_name", type=str, default=None, help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--use_cache", action="store_true", default=False, help="Whether to use cache.")
@@ -86,7 +87,9 @@ parser.add_argument("--split_test_num", type=int, help="The number of examples i
 args = parser.parse_args()
 
 # ================ Parse arguments ================
-log_dir=f"./logs/finetuned/{args.model_path}/{args.dataset_name}/bs{args.block_size}/{args.model_type}"
+log_dir=f"./logs/finetuned/{args.model_path}/{args.dataset_name}/bs{args.block_size}/{args.model_type}/"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 logger = get_logger("finetune", log_dir, "info")
 # Accelerator
 accelerator = Accelerator()

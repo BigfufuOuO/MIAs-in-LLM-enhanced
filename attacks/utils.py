@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import auc
 import os
 import pandas as pd
+import json
 from models.finetuned_llms import FinetunedCasualLM
 from models.mask_llms import MaskLanguageModel
 
@@ -33,12 +34,13 @@ def draw_auc_curve(fpr, tpr,
     plt.savefig(os.path.join(save_path, f'{metric}.png'))
     
 def save_to_csv(results, 
+                mode='default', 
                 save_path="./results"):
     """
     Save the results to a csv file.
     """
     df = pd.DataFrame.from_dict(results, orient='index').T
-    save_path = os.path.join(save_path, 'results.csv')
+    save_path = os.path.join(save_path, f'results_{mode}.csv')
     df.to_csv(save_path, 
               mode='a',
               header=True if not os.path.exists(save_path) else False,
@@ -63,8 +65,18 @@ def load_target_models(args,
         target_llm = FinetunedCasualLM(args=args,
                                        model_path=target_path)
     else:
+        kwargs = {}
+        if args.mode == "ft-phase":
+            trainer_state_path = os.path.join(args.target_model, "trainer_state.json")
+            with open(trainer_state_path, "r") as f:
+                trainer_state = json.load(f)
+            kwargs["train_loss"] = trainer_state["log_history"][-2]
+            kwargs["eval_step"] = trainer_state["log_history"][-1]
         target_llm = FinetunedCasualLM(args=args,
-                                       model_path=args.target_model)
+                                       model_path=args.target_model,
+                                       **kwargs)
+        
+            
         
     return target_llm
     

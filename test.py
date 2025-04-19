@@ -1,6 +1,6 @@
 import pprint
-import datasets
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-data = datasets.load_dataset('LLM-PBE/enron-email', split='train')
-
-print(dir(data))
+# tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
+model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
+print(model.__class__.__name__)

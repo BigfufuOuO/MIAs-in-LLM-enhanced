@@ -6,7 +6,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import time
 
 from .LLMBase import LLMBase
+from finetune.utils import get_logger
 
+logger = get_logger("MIA", level="info")
 
 class SamplingArgs:
     def __init__(self,
@@ -58,7 +60,8 @@ class FinetunedCasualLM(LLMBase):
     def __init__(self, args=None, 
                  arch=None, 
                  model_path='openai-community/gpt2', 
-                 max_seq_len=1024):
+                 max_seq_len=1024,
+                 **kwargs):
         
         if ':' in model_path:
             model_path, self.model_revision = model_path.split(':')
@@ -76,6 +79,10 @@ class FinetunedCasualLM(LLMBase):
         self.tokenizer_use_fast = True
         self.max_seq_len = max_seq_len
         self.verbose = True
+        
+        if kwargs.get("train_loss", None) and kwargs.get("eval_loss", None):
+            self.train_loss = kwargs.get("train_loss")
+            self.eval_loss = kwargs.get("eval_loss")
 
         super().__init__(model_path=model_path)
 
@@ -90,7 +97,7 @@ class FinetunedCasualLM(LLMBase):
         # int8 or half precision
         int8_kwargs = {}
         half_kwargs = {}
-        print(f"Loading model in int8: {self.args.int8} or half: {self.args.half}")
+        logger.info(f"Loading model in int8: {self.args.int8} or half: {self.args.half}")
         if self.args.int4:
             bnb_config = BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -108,7 +115,7 @@ class FinetunedCasualLM(LLMBase):
         self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
                                                         use_fast=self.tokenizer_use_fast)
         if self.verbose:
-            print(
+            logger.info(
                 f"> Loading the provided {self.arch} checkpoint from '{model_path}'.")
 
         try:

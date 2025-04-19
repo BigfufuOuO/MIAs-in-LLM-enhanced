@@ -5,19 +5,18 @@ from torch.utils.data import IterableDataset
 import warnings
 import random
 import torch
+import datetime
+import os
 
 
 def get_logger(name: str, 
-               file_name: str,
-               level: Literal["info", "warning", "debug"]) -> logging.Logger:
+               file_name: str = None,
+               level: Literal["info", "warning", "debug"] = "info") -> logging.Logger:
     """
     Get a logger with rich handler. Rich handler is a handler that prints logs with rich formatting, 
     where logs are colored and formatted.
     """
     rich_handler = RichHandler(level=logging.INFO, rich_tracebacks=True, markup=True)
-    
-    datetime = "{:%Y-%m-%d_%H-%M-%S}".format(datetime.datetime.now())
-    file_handler = logging.FileHandler(f"{file_name}_{datetime}.log")
         
     logger = logging.getLogger(name)
     logger.setLevel(logging._nameToLevel[level.upper()])
@@ -26,6 +25,11 @@ def get_logger(name: str,
         logger.addHandler(rich_handler)
         
     if file_name:
+        if not os.path.exists(file_name):
+            os.makedirs(file_name)
+        timenow = "{:%Y-%m-%d_%H-%M-%S}".format(datetime.datetime.now())
+        file_path = os.path.join(file_name, f"{timenow}.log")
+        file_handler = logging.FileHandler(file_path)
         logger.addHandler(file_handler)
 
     logger.propagate = False

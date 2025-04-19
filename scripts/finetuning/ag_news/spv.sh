@@ -1,24 +1,24 @@
 #!/bin/bash
 # self prompt reference tranining
-export CUDA_VISIBLE_DEVICES=5
+export CUDA_VISIBLE_DEVICES=6
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name=Qwen/Qwen2.5-7B
+model_name=Qwen/Qwen2.5-1.5B
 model_type="self_prompt"
-dataset_name=LLM-PBE/enron-email
+dataset_name=ag_news
 
 log_dir="./logs/finetuned/$model_name"/"$dataset_name"/"bs$block_size/"$model_type"/"
 mkdir -p $log_dir
 exec > >(tee -i "$log_dir/output"$datetime".log")
 
-for block_size in 96 160 192; do
+for block_size in 32 64 128; do
     output_dir="./ft_llms/"$model_name"/"$dataset_name"/"bs$block_size"/"$model_type"/"
     dataset="data/refer_data/"$model_name"/"$dataset_name"/bs"$block_size"/"
     if [ $block_size -gt 64 ]; then
         batch_size=16
     else
-        batch_size=64
+        batch_size=32
     fi
     accelerate launch ./finetune/finetuning_llms.py \
         --output_dir $output_dir \

@@ -1,6 +1,8 @@
 import datasets
 import os
 import numpy as np
+from finetune.utils import get_logger
+logger = get_logger(__name__, level="info")
 
 
 def packing_texts(examples,):
@@ -144,7 +146,7 @@ def dataset_prepare(args,
     column = train_dataset.column_names
     possible_text_columns = ["text", "document", "content"]
     text_column = next((col for col in possible_text_columns if col in column), None)
-    print(f"Train dataset columns: {column}, select text column: {text_column}")
+    logger.info(f"Train dataset columns: {column}, select text column: {text_column}")
     
     train_dataset = train_dataset.select_columns(text_column)
     valid_dataset = valid_dataset.select_columns(text_column)
@@ -157,7 +159,7 @@ def dataset_prepare(args,
         block_size = args.block_size
         max_buff_size = block_size * chars_per_token * num_of_sequences
         tokenizer_ = tokenizer
-        print(f"Block size: {block_size}, max buffer size: {max_buff_size}")
+        logger.info(f"Block size: {block_size}, max buffer size: {max_buff_size}")
         # if dir not exists, create it
         save_path = f"{args.dataset_cache_path}/{args.model_path}/{args.dataset_name}/bs{block_size}"
         if not os.path.exists(save_path):
