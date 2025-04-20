@@ -71,7 +71,7 @@ def load_target_models(args,
             with open(trainer_state_path, "r") as f:
                 trainer_state = json.load(f)
             kwargs["train_loss"] = trainer_state["log_history"][-2]
-            kwargs["eval_step"] = trainer_state["log_history"][-1]
+            kwargs["eval_loss"] = trainer_state["log_history"][-1]
         target_llm = FinetunedCasualLM(args=args,
                                        model_path=args.target_model,
                                        **kwargs)

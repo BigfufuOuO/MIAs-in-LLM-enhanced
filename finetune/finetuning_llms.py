@@ -294,7 +294,6 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     max_seq_length=1024,
     callbacks=[
-        LossStoppingCallback(loss_threshold=2.5),
     ],
 )
 

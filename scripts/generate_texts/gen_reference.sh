@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=6
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start Generating reference data."

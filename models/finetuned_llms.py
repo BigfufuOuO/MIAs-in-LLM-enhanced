@@ -81,6 +81,7 @@ class FinetunedCasualLM(LLMBase):
         self.verbose = True
         
         if kwargs.get("train_loss", None) and kwargs.get("eval_loss", None):
+            logger.info(f"Training loss: {kwargs.get('train_loss')}, Evaluation loss: {kwargs.get('eval_loss')}")
             self.train_loss = kwargs.get("train_loss")
             self.eval_loss = kwargs.get("eval_loss")
 

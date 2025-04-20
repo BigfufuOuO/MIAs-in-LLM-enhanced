@@ -1,11 +1,11 @@
 #!/bin/bash
 # set available GPUs
-export CUDA_VISIBLE_DEVICES=3
+export CUDA_VISIBLE_DEVICES=7
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name=Qwen/Qwen2.5-7B
-dataset=ag_news
+model_name=Qwen/Qwen2.5-1.5B
+dataset="LLM-PBE/enron-email"
 model_type="refer_orcale"
 
 for block_size in 32 64 128; do
@@ -26,7 +26,7 @@ for block_size in 32 64 128; do
         --split_train_begin 3000 --split_test_begin 2000 \
         --split_train_num 3000 --split_test_num 2000 \
         --use_dataset_cache \
-        -e 10 -bs $batch_size -lr 3e-3 --gradient_accumulation_steps 1 \
+        -e 10 -bs $batch_size -lr 5e-4 --gradient_accumulation_steps 1 \
         --token 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 \
         --gradient_checkpointing
 done

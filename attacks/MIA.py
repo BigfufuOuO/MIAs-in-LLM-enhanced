@@ -238,8 +238,9 @@ class MemberInferenceAttack(AttackBase):
             if extra_llms[1]:
                 score_dict['mask_model'] = extra_llms[1].model.__class__.__name__      
         elif args.mode == "ft-phase":
-            score_dict['train_loss'] = self.target_model.train_loss
-            score_dict['eval_loss'] = self.target_model.eval_loss
+            score_dict['train_loss'] = self.target_model.train_loss.get("loss", None)
+            score_dict['eval_loss'] = self.target_model.eval_loss.get("eval_loss", None)
+            score_dict['epoch'] = self.target_model.train_loss.get("epoch", None)
         
         # save the results
         save_to_csv(score_dict, args.mode, save_path)

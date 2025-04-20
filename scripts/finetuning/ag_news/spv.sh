@@ -1,12 +1,12 @@
 #!/bin/bash
 # self prompt reference tranining
-export CUDA_VISIBLE_DEVICES=6
+export CUDA_VISIBLE_DEVICES=7
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
 model_name=Qwen/Qwen2.5-1.5B
 model_type="self_prompt"
-dataset_name=ag_news
+dataset_name="LLM-PBE/enron-email"
 
 log_dir="./logs/finetuned/$model_name"/"$dataset_name"/"bs$block_size/"$model_type"/"
 mkdir -p $log_dir
