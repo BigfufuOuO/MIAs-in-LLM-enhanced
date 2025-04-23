@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, roc_curve, auc
 from collections import defaultdict
 
 from models.finetuned_llms import FinetunedCasualLM
-from .functions import function_map
+from .functions import AttackMethods
 from .utils import draw_auc_curve, save_to_csv
 import inspect
 from datasets import Dataset
@@ -37,7 +37,8 @@ class MemberInferenceAttack(AttackBase):
                  args=None,):
         # self.extraction_prompt = ["Tell me about..."]  # TODO this is just an example to extract data.
         self.metric = metric
-        if self.metric not in function_map:
+        self.attack_methods = AttackMethods(args=args,)
+        if self.metric not in self.attack_methods.function_map:
             raise ValueError(f"Metric {self.metric} is not supported. Please check if the function is implemented or if the name is correct.")
         self.target_model = target_model
         self.ref_model = ref_model
@@ -70,28 +71,28 @@ class MemberInferenceAttack(AttackBase):
         # get locals
         locals_ = locals()
         # access the function from the function map, according to the metric.
-        sig = inspect.signature(function_map[self.metric])
+        sig = inspect.signature(self.attack_methods.function_map[self.metric])
         required_args = sig.parameters
         extracted_args = {
             name: locals_[name] 
-            for name in required_args if name in locals_
+            for name in required_args if name in locals_ and name != 'self'
         }
         
         if self.metric == 'neighbor' or self.metric == 'spv_mia':
             if 'neighbor_texts' not in dataset.column_names:
-                score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+                score = dataset.map(lambda example: self.attack_methods.function_map[self.metric](text=example['text'], **extracted_args),
                                     batched=True,
                                     batch_size=64,
                                     desc=f"Evaluating {self.metric}")
             else:
-                score = dataset.map(lambda example: function_map[self.metric](text=example['text'],
+                score = dataset.map(lambda example: self.attack_methods.function_map[self.metric](text=example['text'],
                                                                                 neighbors=example['neighbor_texts'],
                                                                                 **extracted_args),
                                         batched=True,
                                         batch_size=16,
                                         desc=f"Evaluating {self.metric}")
         else:
-            score = dataset.map(lambda example: function_map[self.metric](text=example['text'], **extracted_args),
+            score = dataset.map(lambda example: self.attack_methods.function_map[self.metric](text=example['text'], **extracted_args),
                                 batched=False,
                                 desc=f"Evaluating {self.metric}")
         return score
@@ -241,6 +242,8 @@ class MemberInferenceAttack(AttackBase):
             score_dict['train_loss'] = self.target_model.train_loss.get("loss", None)
             score_dict['eval_loss'] = self.target_model.eval_loss.get("eval_loss", None)
             score_dict['epoch'] = self.target_model.train_loss.get("epoch", None)
+        elif args.mode == "defense":
+            score_dict['defense_method'] = args.defense
         
         # save the results
         save_to_csv(score_dict, args.mode, save_path)

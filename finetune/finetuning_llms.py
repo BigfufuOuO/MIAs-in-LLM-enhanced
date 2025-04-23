@@ -9,6 +9,8 @@ from transformers import (
     EarlyStoppingCallback
 )
 from accelerate import Accelerator
+import dp_transformers
+import opacus
 
 from datasets import Dataset, load_from_disk
 
@@ -26,7 +28,7 @@ from callbacks import LossStoppingCallback
 # ================ Arguments ================
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="openai-community/gpt2", help="The original model path.")
-parser.add_argument("--model_type", type=str, choices=['target_base', 'refer_orcale', 'self_prompt'], help="The model type.")
+parser.add_argument("--model_type", type=str, choices=['target_base', 'refer_orcale', 'self_prompt', 'target_base_dp'], help="The model type.")
 parser.add_argument("--dataset_name", type=str, default="wikitext", help="The dataset name.")
 parser.add_argument("--dataset_config_name", type=str, default=None, help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--use_cache", action="store_true", default=False, help="Whether to use cache.")
@@ -84,6 +86,10 @@ parser.add_argument("--split_train_begin", type=int, default=0, help="The index 
 parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
 parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
 parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
+
+# callbacks
+parser.add_argument("--loss_stopping", action="store_true", default=False, help="Whether to use loss stopping callback.")
+parser.add_argument("--DP_ft", action="store_true", default=False, help="Whether to use DP-SGD finetuning.")
 args = parser.parse_args()
 
 # ================ Parse arguments ================
@@ -251,6 +257,11 @@ with accelerator.main_process_first():
     logger.info(f">>> Preview of the train dataset: {train_preview}, valid dataset: {valid_preview}")
 
 logger.info(f"Length of Train dataset: {len(train_dataset)}, Valid dataset: {len(valid_dataset)}")
+
+callbacks = []
+if args.loss_stopping:
+    callbacks.append(LossStoppingCallback(early_stopping_threshold=2.5))
+logger.info(f"Callbacks: {callbacks}")
     
 logger.info(f"Training with {Accelerator().num_processes} GPUs")
 training_args = TrainingArguments(
@@ -293,8 +304,7 @@ trainer = SFTTrainer(
     # dataset_text_field="text",
     tokenizer=tokenizer,
     max_seq_length=1024,
-    callbacks=[
-    ],
+    callbacks=callbacks,
 )
 
 # train

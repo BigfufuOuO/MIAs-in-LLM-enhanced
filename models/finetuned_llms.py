@@ -220,7 +220,8 @@ class FinetunedCasualLM(LLMBase):
             )
         return output.loss.item()
     
-    def evaluate_batch(self, texts, tokenized=False):
+    def evaluate_batch(self, 
+                       texts: list) -> torch.Tensor:
         """
         Evaluate an open-source model with a batch of text prompts.
 
@@ -230,9 +231,86 @@ class FinetunedCasualLM(LLMBase):
         Returns:
             loss: The model's average loss.
         """
-        raise NotImplementedError("Batch evaluation is not implemented.")
-
-    def evaluate_ppl(self, text, tokenized=False):
+        loss_fct = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
+        input_ids = self._tokenizer(texts, 
+                                    return_tensors='pt', 
+                                    padding=True,
+                                    truncation=True,
+                                    max_length=self.max_seq_len).input_ids
+        attention_mask = torch.where(input_ids == self._tokenizer.pad_token_id, 0, 1)
+        
+        input_ids = input_ids.to(self.model.device)
+        attention_mask = attention_mask.to(self.model.device)
+        with torch.no_grad():
+            output = self.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=input_ids.clone(),
+            )
+        shift_logits = output.logits[..., :-1, :].contiguous()
+        shift_labels = input_ids[..., 1:].contiguous()
+        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        batch_size, seq_len = shift_labels.shape
+        padding_mask = (shift_labels != self._tokenizer.pad_token_id).float()
+        loss_per_sentence = loss.view(batch_size, seq_len)
+        loss_per_sentence = (loss_per_sentence * padding_mask).sum(dim=1) / padding_mask.sum(dim=1)
+        return loss_per_sentence.mean().item()
+    
+    def evaluate_with_dp(self, 
+                         text,
+                         lambda_param: int = 0.5,
+                         padding: bool = False,
+                         tokenized: bool = False) -> torch.Tensor:
+        """
+        Evaluate an open-source model with a given text prompt. 
+        Based on the DP method mentioned by:
+        https://arxiv.org/pdf/2205.13621
+        
+        """
+        loss_fct = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
+        if tokenized:
+            input_ids = text
+        else:
+            input_ids = self._tokenizer(text, 
+                                        return_tensors='pt', 
+                                        padding=padding,
+                                        truncation=True,
+                                        max_length=self.max_seq_len).input_ids
+        attention_mask = torch.where(input_ids == self._tokenizer.pad_token_id, 0, 1)
+        input_ids = input_ids.to(self.model.device)
+        attention_mask = attention_mask.to(self.model.device)
+        with torch.no_grad():
+            output = self.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=input_ids.clone(),
+            )
+        
+        # DP
+        vocab_size = output.logits.shape[-1]
+        uniform_dist = torch.ones(vocab_size).to(self.model.device) / vocab_size
+        original_probs = torch.softmax(output.logits, dim=-1)
+        perturbed_probs = lambda_param * original_probs + (1 - lambda_param) * uniform_dist
+        perturbed_logits = torch.log(perturbed_probs)
+        
+        # loss
+        shift_logits = perturbed_logits[..., :-1, :].contiguous()
+        shift_labels = input_ids[..., 1:].contiguous()
+        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        batch_size, seq_len = shift_labels.shape
+        padding_mask = (shift_labels != self._tokenizer.pad_token_id).float()
+        loss_per_sentence = loss.view(batch_size, seq_len)
+        loss_per_sentence = (loss_per_sentence * padding_mask).sum(dim=1) / padding_mask.sum(dim=1)
+        return loss_per_sentence
+    
+    def evaluate_batch_with_dp(self, 
+                               texts: list, 
+                               lambda_param: int = 0.5,
+                               padding: bool = True) -> torch.Tensor:
+        loss_per_sentence = self.evaluate_with_dp(texts, lambda_param=lambda_param, padding=padding)
+        return loss_per_sentence.mean()
+            
+    def evaluate_ppl(self, text, tokenized=False, dp=False, lambda_param=0.8):
         """
         Evaluate an open-source model with a given text prompt.
 
@@ -242,7 +320,10 @@ class FinetunedCasualLM(LLMBase):
         Returns:
             PPL: The model's perpelexity.
         """
-        loss = self.evaluate(text, tokenized=tokenized)
+        if dp:
+            loss = self.evaluate_with_dp(text, lambda_param=lambda_param, tokenized=tokenized).item()
+        else:
+            loss = self.evaluate(text, tokenized=tokenized)
         return np.exp(loss)
 
     def generate_neighbors(self, text, p=0.7, k=3, n=5):

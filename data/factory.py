@@ -1,5 +1,3 @@
-from .echr import EchrDataset
-from .enron import EnronDataset
 from .provider import dataset_prepare
 from datasets import Dataset
 import numpy as np
@@ -15,16 +13,7 @@ class DataFactory:
         
 
     def get_dataset(self, args, tokenizer):
-        if args.dataset_name == "data/echr":
-            data = EchrDataset(data_path=self.data_path)
-            train = data.train_set()
-            test = data.test_set()
-        elif args.dataset_name == "data/enron":
-            data = EnronDataset(data_path=self.data_path)
-            train = data.train_set()
-            test = data.test_set()
-        else:
-            train, test = dataset_prepare(args=args, tokenizer=tokenizer)
+        train, test = dataset_prepare(args=args, tokenizer=tokenizer)
             
         if args.debug:
             train = train.select(list(range(len(train) // 200)))
