@@ -89,7 +89,7 @@ class MemberInferenceAttack(AttackBase):
                                                                                 neighbors=example['neighbor_texts'],
                                                                                 **extracted_args),
                                         batched=True,
-                                        batch_size=16,
+                                        batch_size=32,
                                         desc=f"Evaluating {self.metric}")
         else:
             score = dataset.map(lambda example: self.attack_methods.function_map[self.metric](text=example['text'], **extracted_args),

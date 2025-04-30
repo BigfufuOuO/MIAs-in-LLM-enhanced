@@ -1,10 +1,10 @@
 #!/bin/bash
 # set available GPUs
-export CUDA_VISIBLE_DEVICES=7
+export CUDA_VISIBLE_DEVICES=1
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name=Qwen/Qwen2.5-1.5B
+model_name=Qwen/Qwen2.5-3B
 dataset="ag_news"
 model_type="target_base"
 

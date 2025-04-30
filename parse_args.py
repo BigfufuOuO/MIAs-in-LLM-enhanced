@@ -40,7 +40,7 @@ def get_args():
     parser.add_argument("--log_dir", type=str, required=True, help="The log directory to save the logs.")
     parser.add_argument("--mode", type=str, required=True, choices=["default", "neighbor",
                                                                     "ft-phase", "defense"], help="The mode to run the program in.")
-    parser.add_argument("--defense", type=str, choices=['dp-8', 'dp_linear', 'scrub'], help="The random seed to use.")
+    parser.add_argument("--defense", type=str, choices=['dp_8', 'dp_linear', 'scrub'], help="The random seed to use.")
 
     # debug
     parser.add_argument("--debug", action="store_true", help="Debug mode.")
@@ -51,10 +51,13 @@ def get_args():
     parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
     parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
     parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
+    parser.add_argument("--split_shuffle", type=int, default=1, help="Whether to shuffle the dataset before splitting.")
 
+    
     # finetune
     parser.add_argument("--output_dir", type=str, help="The output directory to save the finetuned models.")
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Whether to use gradient checkpointing.")
+    parser.add_argument("--load_bin", action="store_true", default=False, help="Whether to load the bin model.")
     
     # result
     parser.add_argument("--result_dir", type=str, default="./results", help="The output directory to save the results.")

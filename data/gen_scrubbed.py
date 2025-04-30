@@ -40,7 +40,7 @@ parser.add_argument("--split_train_begin", type=int, default=0, help="The index 
 parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
 parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
 parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
-
+parser.add_argument("--split_shuffle", type=int, default=1, help="Whether to shuffle the dataset before splitting.")
 
 
 args = parser.parse_args()

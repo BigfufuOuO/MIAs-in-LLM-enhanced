@@ -28,7 +28,7 @@ from callbacks import LossStoppingCallback
 # ================ Arguments ================
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="openai-community/gpt2", help="The original model path.")
-parser.add_argument("--model_type", type=str, choices=['target_base', 'refer_orcale', 'self_prompt', 'target_base_dp'], help="The model type.")
+parser.add_argument("--model_type", type=str, choices=['target_base', 'refer_orcale', 'self_prompt', 'target_base_dp', 'target_base_scrub'], help="The model type.")
 parser.add_argument("--dataset_name", type=str, default="wikitext", help="The dataset name.")
 parser.add_argument("--dataset_config_name", type=str, default=None, help="The configuration name of the dataset to use (via the datasets library).")
 parser.add_argument("--use_cache", action="store_true", default=False, help="Whether to use cache.")
@@ -86,6 +86,7 @@ parser.add_argument("--split_train_begin", type=int, default=0, help="The index 
 parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
 parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
 parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
+parser.add_argument("--split_shuffle", type=int, default=1, help="Whether to shuffle the dataset before splitting.")
 
 # callbacks
 parser.add_argument("--loss_stopping", action="store_true", default=False, help="Whether to use loss stopping callback.")
@@ -291,6 +292,7 @@ training_args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="loss",
     save_total_limit=args.save_limit,
+    save_safetensors=False,
     bf16=True if torch.cuda.is_bf16_supported() else False,
     fp16=False if torch.cuda.is_bf16_supported() else True,
 )

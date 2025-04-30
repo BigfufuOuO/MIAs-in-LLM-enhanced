@@ -1,6 +1,6 @@
 #!/bin/bash
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=7
+export CUDA_VISIBLE_DEVICES=2
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
@@ -20,13 +20,13 @@ metric=("empty" "loss" "ppl" "zlib" "lowercase" "window" "min_k"
         "min_k++" "refer-base" "lira-base" "refer-orcale" "lira-orcale"
         "neighbor" "spv_mia")
 
-# metric=("spv_mia")
+#  metric=("neighbor" "spv_mia")
 # Empty
 accelerate launch run.py \
     --model_path $model_path \
-    --target_model $2 \
     --mode "defense" \
-    --defense "dp_linear" \
+    --defense "scrub" \
+    --target_model $2 \
     --log_dir $log_dir \
     --dataset_name $dataset_name \
     --metric "${metric[@]}" \

@@ -9,6 +9,7 @@ from transformers import (
 from accelerate import Accelerator
 import dp_transformers
 import opacus
+from safetensors.torch import save_model
 
 from datasets import Dataset, load_from_disk
 
@@ -45,7 +46,7 @@ parser.add_argument("--block_size", type=int, default=128)
 parser.add_argument("-lr", "--learning_rate", type=float, default=1e-4, help="The learning rate.")
 parser.add_argument("--lr_scheduler_type", type=str, default="linear", help="The learning rate scheduler type.")
 parser.add_argument("--warmup_steps", type=int, default=0, help="The number of warmup steps. Warm up means linearly increase the learning rate from 0 to the initial learning rate.")
-parser.add_argument("--weight_decay", type=float, default=0, help="The weight decay.")
+parser.add_argument("--weight_decay", type=float, default=0.01, help="The weight decay.")
 parser.add_argument("--log_steps", type=int, default=10)
 parser.add_argument("--eval_steps", type=int, default=10)
 parser.add_argument("--save_epochs", type=int, default=10)
@@ -56,8 +57,8 @@ parser.add_argument("--gradient_checkpointing", action="store_true", default=Fal
 
 parser.add_argument("--peft", type=str, default="lora")
 parser.add_argument("--lora_rank", type=int, default=64)
-parser.add_argument("--lora_alpha", type=int, default=16)
-parser.add_argument("--lora_dropout", type=float, default=0.1)
+parser.add_argument("--lora_alpha", type=int, default=32)
+parser.add_argument("--lora_dropout", type=float, default=0.0)
 parser.add_argument("--p_tokens", type=int, help="The number of virtual tokens for prefix-tuning or p-tuning", default=20)
 parser.add_argument("--p_hidden", type=int, help="The hidden size of the prompt encoder", default=128)
 
@@ -278,7 +279,7 @@ if args.DP_ft:
     )
     training_args = dp_transformers.TrainingArguments(
         do_train=True,
-        do_eval=True,
+        do_eval=False,
         output_dir=args.output_dir,
         eval_strategy="epoch",
         save_strategy="epoch",
@@ -292,6 +293,10 @@ if args.DP_ft:
         optim=optimizer,
         learning_rate=args.learning_rate,
         lr_scheduler_type=args.lr_scheduler_type,
+        log_level="info",
+        eval_accumulation_steps=1,
+        prediction_loss_only=True,
+        max_grad_norm=0,
         warmup_steps=args.warmup_steps,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         gradient_checkpointing=False,
@@ -301,8 +306,8 @@ if args.DP_ft:
         report_to="none",
         load_best_model_at_end=False,
         remove_unused_columns=False,
-        save_total_limit=args.save_limit,
         save_safetensors=False,
+        save_total_limit=args.save_limit,
     )
     privacy_args = dp_transformers.PrivacyArguments(
         per_sample_max_grad_norm=1.0,
@@ -315,8 +320,12 @@ if args.DP_ft:
         model=model,
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,
+        tokenizer=tokenizer,
         data_collator=data_collator,
         privacy_args=privacy_args,
     )
     
     trainer.train()
+    # peft_config.save_pretrained(args.output_dir)
+    # torch.save(trainer.model.state_dict(), os.path.join(args.output_dir, "adapter_model.bin"))
+    trainer.model._module.save_pretrained(args.output_dir)

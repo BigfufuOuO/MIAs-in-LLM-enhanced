@@ -112,7 +112,8 @@ def load_refer_models(args,
                                            model_path=refer_path)
         elif metric == 'neighbor':
             refer_llm = FinetunedCasualLM(args=args,
-                                          model_path=mask_llm)
+                                          model_path=mask_llm,
+                                          mask=True)
         elif metric == 'spv_mia':
             dataset_name = args.dataset_name
             block_size = args.block_size

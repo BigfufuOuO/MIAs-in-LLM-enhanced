@@ -4,8 +4,8 @@ export CUDA_VISIBLE_DEVICES=7
 # set huggingface endpoint
 export HF_ENDPOINT="http://hf-mirror.com"
 
-model_name=Qwen/Qwen2.5-1.5B
-dataset="LLM-PBE/enron-email"
+model_name=Qwen/Qwen2.5-3B
+dataset="ag_news"
 model_type="refer_orcale"
 
 for block_size in 32 64 128; do

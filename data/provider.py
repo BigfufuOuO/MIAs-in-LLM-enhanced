@@ -119,7 +119,7 @@ def dataset_prepare(args,
     """
     if args.load_from_disk:
         all_dataset = datasets.load_from_disk(args.dataset_name)
-        split_dataset = all_dataset.train_test_split(train_size=1-args.validation_split_percentage)
+        split_dataset = all_dataset.train_test_split(train_size=1-args.validation_split_percentage, shuffle=False)
         train_dataset = split_dataset["train"]
         valid_dataset = split_dataset["test"]
     else:

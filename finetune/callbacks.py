@@ -1,4 +1,6 @@
 from transformers import TrainerCallback
+from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
+import os
 
 class LossStoppingCallback(TrainerCallback):
     """
@@ -22,3 +24,28 @@ class LossStoppingCallback(TrainerCallback):
         epoch = state.log_history[-1]["epoch"]
         if loss_value < self.loss_threshold and epoch >= self.start_epoch:
             control.should_training_stop = True
+            
+            
+class PeftSavingCallback(TrainerCallback):
+    """
+    Save the PEFT model after each epoch.
+    
+    """
+    def on_save(
+        self,
+        args,
+        state,
+        control,
+        **kwargs,
+    ):
+        checkpoint_folder = os.path.join(
+            args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}"
+        )       
+
+        peft_model_path = os.path.join(checkpoint_folder, "adapter_model")
+        kwargs["model"].save_pretrained(peft_model_path)
+
+        pytorch_model_path = os.path.join(checkpoint_folder, "pytorch_model.bin")
+        if os.path.exists(pytorch_model_path):
+            os.remove(pytorch_model_path)
+        return control

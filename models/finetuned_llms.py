@@ -2,8 +2,13 @@ import transformers
 import torch
 import numpy as np
 from heapq import nlargest
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, AutoConfig,
+    AutoModel
+)
 import time
+from safetensors.torch import load_model
+import os
 
 from .LLMBase import LLMBase
 from finetune.utils import get_logger
@@ -61,6 +66,7 @@ class FinetunedCasualLM(LLMBase):
                  arch=None, 
                  model_path='openai-community/gpt2', 
                  max_seq_len=1024,
+                 mask=False,
                  **kwargs):
         
         if ':' in model_path:
@@ -68,10 +74,10 @@ class FinetunedCasualLM(LLMBase):
         else:
             self.model_revision = 'main'
 
-        if arch is None:
+        if not args.load_bin or mask:
             self.arch = model_path
         else:
-            self.arch = arch
+            self.arch = args.model_path
 
         # arguments
         self.args = args
@@ -113,23 +119,32 @@ class FinetunedCasualLM(LLMBase):
         elif self.args.half:
             bnb_config = None
             
+        logger.info(f"Loading tokenizer from {self.arch}")
         self._tokenizer = AutoTokenizer.from_pretrained(self.arch,
                                                         use_fast=self.tokenizer_use_fast)
         if self.verbose:
             logger.info(
                 f"> Loading the provided {self.arch} checkpoint from '{model_path}'.")
 
-        try:
+        if self.args.load_bin:
             self.model = AutoModelForCausalLM.from_pretrained(model_path,
+                                                              return_dict=True,
+                                                                device_map='auto',
+                                                                revision=self.model_revision,
+                                                                torch_dtype=torch.bfloat16,
+                                                                token=self.args.token,
+                                                                quantization_config=bnb_config,)
+        else: 
+            try:
+                self.model = AutoModelForCausalLM.from_pretrained(model_path,
                                                             return_dict=True,
                                                             device_map='auto',
                                                             revision=self.model_revision,
                                                             torch_dtype=torch.bfloat16,
                                                             token=self.args.token,
                                                             quantization_config=bnb_config,)
-            
-        except:
-            self.model = AutoModelForCausalLM.from_pretrained(model_path, 
+            except:
+                self.model = AutoModelForCausalLM.from_pretrained(model_path, 
                                                             return_dict=True, 
                                                             device_map='auto',
                                                             revision=self.model_revision, 
@@ -137,7 +152,8 @@ class FinetunedCasualLM(LLMBase):
                                                             low_cpu_mem_usage=True,
                                                             torch_dtype=torch.bfloat16,
                                                             token=self.args.token,
-                                                            quantization_config=bnb_config)
+                                                            quantization_config=bnb_config,)
+            
             
         self.model.eval()
 
@@ -419,7 +435,8 @@ class FinetunedCasualLM(LLMBase):
         tokenized = self._tokenizer(texts, 
                                     return_tensors='pt', 
                                     truncation=True,
-                                    padding='longest',).input_ids.to(self.model.device)
+                                    padding='longest',
+                                    max_length=256).input_ids.to(self.model.device)
         batch_size = tokenized.shape[0]
         
         dropout = torch.nn.Dropout(p)

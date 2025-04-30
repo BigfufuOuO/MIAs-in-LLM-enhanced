@@ -26,8 +26,9 @@ class DataFactory:
             # reshuffle the indices
             train_indices = np.arange(len(train))
             test_indices = np.arange(len(test))
-            train_indices = np.random.permutation(train_indices)
-            test_indices = np.random.permutation(test_indices)
+            if args.split_shuffle:
+                train_indices = np.random.permutation(train_indices)
+                test_indices = np.random.permutation(test_indices)
             
             if args.split_train_num:
                 start = args.split_train_begin
