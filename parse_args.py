@@ -40,7 +40,7 @@ def get_args():
     parser.add_argument("--log_dir", type=str, required=True, help="The log directory to save the logs.")
     parser.add_argument("--mode", type=str, required=True, choices=["default", "neighbor",
                                                                     "ft-phase", "defense"], help="The mode to run the program in.")
-    parser.add_argument("--defense", type=str, choices=['dp_8', 'dp_linear', 'scrub'], help="The random seed to use.")
+    parser.add_argument("--defense", type=str, choices=['dp_8','dp_16', 'dp_linear', 'scrub'], help="The random seed to use.")
 
     # debug
     parser.add_argument("--debug", action="store_true", help="Debug mode.")

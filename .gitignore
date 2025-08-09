@@ -16,4 +16,4 @@ results/
 logs/
 
 *.out
-*.sh
+scan.sh

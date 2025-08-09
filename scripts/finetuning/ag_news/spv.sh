@@ -30,6 +30,5 @@ for block_size in 32 64 128; do
         --split_dataset \
         --split_train_num 900 --split_test_num 500 \
         -e 4 -bs $batch_size -lr 5e-3 --gradient_accumulation_steps 1 \
-        --gradient_checkpointing \
-        --token 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
+        --gradient_checkpointing
 done

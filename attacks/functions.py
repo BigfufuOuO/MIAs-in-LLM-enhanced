@@ -60,7 +60,7 @@ class AttackMethods:
             text: The text to evaluate.
         """
         if self.dp_linear:
-            score = target.evaluate_with_dp(text, lambda_param=0.8)
+            score = target.evaluate_with_dp(text, lambda_param=0.5)
             return {
                 "score": score
             }

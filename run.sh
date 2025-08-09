@@ -1,6 +1,6 @@
 #!/bin/bash
 # set visible gpu devices
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 export HF_ENDPOINT="http://hf-mirror.com"
 
 echo "Start running the experiment."
@@ -8,7 +8,7 @@ echo ">>>> [CUDA]Cuda visible devices: $CUDA_VISIBLE_DEVICES"
 
 block_size=$3
 model_path=$1
-dataset_name="LLM-PBE/enron-email"
+dataset_name="ag_news"
 
 log_dir="./logs/$model_path"/"$dataset_name"/"bs$block_size/"
 
@@ -16,16 +16,16 @@ split_end=0.3
 split_train_num=3000
 split_test_num=2000
 
-metric=("empty" "loss" "ppl" "zlib" "lowercase" "window" "min_k" 
-        "min_k++" "refer-base" "lira-base" "refer-orcale" "lira-orcale"
-        "neighbor" "spv_mia")
+# metric=("empty" "loss" "ppl" "zlib" "lowercase" "window" "min_k" 
+#         "min_k++" "refer-base" "lira-base" "refer-orcale" "lira-orcale"
+#         "neighbor" "spv_mia")
 
-#  metric=("neighbor" "spv_mia")
+ metric=("neighbor" "spv_mia")
 # Empty
 accelerate launch run.py \
     --model_path $model_path \
     --mode "defense" \
-    --defense "scrub" \
+    --defense "dp_8" \
     --target_model $2 \
     --log_dir $log_dir \
     --dataset_name $dataset_name \

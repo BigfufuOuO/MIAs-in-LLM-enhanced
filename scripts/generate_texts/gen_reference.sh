@@ -13,6 +13,5 @@ for block_size in 32 64 128; do
         --model_path $model_name \
         --block_size $block_size \
         --dataset_name $dataset_name \
-        --save_path $save_path \
-        --token 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
+        --save_path $save_path
 done

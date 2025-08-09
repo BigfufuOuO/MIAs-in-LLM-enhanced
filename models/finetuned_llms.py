@@ -326,7 +326,7 @@ class FinetunedCasualLM(LLMBase):
         loss_per_sentence = self.evaluate_with_dp(texts, lambda_param=lambda_param, padding=padding)
         return loss_per_sentence.mean()
             
-    def evaluate_ppl(self, text, tokenized=False, dp=False, lambda_param=0.8):
+    def evaluate_ppl(self, text, tokenized=False, dp=False, lambda_param=0.5):
         """
         Evaluate an open-source model with a given text prompt.
 

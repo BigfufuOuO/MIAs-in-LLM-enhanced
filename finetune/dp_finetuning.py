@@ -85,6 +85,7 @@ parser.add_argument("--split_train_begin", type=int, default=0, help="The index 
 parser.add_argument("--split_test_begin", type=int, default=0, help="The index of the beginning of the test set in the split.")
 parser.add_argument("--split_train_num", type=int, help="The number of examples in the train set in the split.")
 parser.add_argument("--split_test_num", type=int, help="The number of examples in the test set in the split.")
+parser.add_argument("--split_shuffle", type=int, default=1, help="Shuffle the dataset before splitting.")
 
 # callbacks
 parser.add_argument("--loss_stopping", action="store_true", default=False, help="Whether to use loss stopping callback.")
