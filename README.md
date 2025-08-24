@@ -16,4 +16,4 @@
 8. Neighbourhood.
 9. Min-k
 10. Min-k ++.
-11. SVA_MIA.(NOT IMPLEMENTED)
+11. SVA_MIA.
